@@ -195,7 +195,7 @@
        READ(1,*) !*       Output management parameters                 *
        READ(1,*) !****************************************************
        READ(1,*)  
-       READ(1,*) FLAG_WRITE_PROTO
+       READ(1,*) FLAG_WRITE_CUBES
       !  READ(1,*)  
       !  READ(1,*) FLAG_WRITE_PIECES
        READ(1,*) !****************************************************
@@ -250,8 +250,8 @@
        IF (FLAG_VEL_INTERP .LT.0 .OR. FLAG_VEL_INTERP .GT. 1) STOP 'FLAG_VEL_INTERP must be 0 or 1'
        !$!$ FLAG_DENS_INTERP must be 0 or 1
        IF (FLAG_DENS_INTERP .LT.0 .OR. FLAG_DENS_INTERP .GT. 1) STOP 'FLAG_DENS_INTERP must be 0 or 1'
-       !$!$ FLAG_WRITE_PROTO must be 0 or 1
-       IF (FLAG_WRITE_PROTO .LT.0 .OR. FLAG_WRITE_PROTO .GT. 1) STOP 'FLAG_WRITE_PROTO must be 0 or 1'
+       !$!$ FLAG_WRITE_CUBES must be 0 or 1
+       IF (FLAG_WRITE_CUBES .LT.0 .OR. FLAG_WRITE_CUBES .GT. 1) STOP 'FLAG_WRITE_CUBES must be 0 or 1'
       !  !$!$ FLAG_WRITE_PIECES must be 0 or 1
       !  IF (FLAG_WRITE_PIECES .LT.0 .OR. FLAG_WRITE_PIECES .GT. 1) STOP 'FLAG_WRITE_PIECES must be 0 or 1'
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -497,10 +497,10 @@
        WRITE(10,*) NLEV, LEVMIN, LEVMAX, NCOX, NCOY, NCOZ, LADO0
 
 
-       !Protovoids ASCII catalogue
-       IF (FLAG_WRITE_PROTO .EQ. 1) THEN
+       !Cubes ASCII catalogue
+       IF (FLAG_WRITE_CUBES .EQ. 1) THEN
           OPEN(UNIT=12, FILE=FILEO2) 
-          !HEADER ON protovoids FILE: NLEV, LEVMIN, LEVMAX
+          !HEADER ON cubes FILE: NLEV, LEVMIN, LEVMAX
           WRITE(12,*) NLEV, LEVMIN, LEVMAX
        END IF
 
@@ -1116,15 +1116,15 @@
 
           !$!$ AFTER VOIDFIND:
           !common variables INICIOXYZ,FINALXYZ,RINIXYZCO,RFINXYZCO,ICXY
-          !are updated with the protovoids at this level
+          !are updated with the cubes at this level
 
           DEALLOCATE(FLAGV, FLAG_SUB)
 
-          WRITE(*,*) 'Found ',NVOID,' cubic protovoids'
+          WRITE(*,*) 'Found ',NVOID,' cubes'
           WRITE(*,*) '///////////// Time (sec) spent during voidfind:', float(t2-t1)/1.e3
           WRITE(*,*)
           
-          !SORTING PROTOVOIDS BY VOLUME
+          !SORTING CUBES BY VOLUME
 
           ALLOCATE(INDICE(NVOID))
           ALLOCATE(INDICE2(NVOID))
@@ -1148,10 +1148,10 @@
 
           DEALLOCATE(INDICE2, VOL2)
 
-          WRITE(*,*) 'Protovoids sorted by volume:'
-          WRITE(*,*) 'Largest protovoid (vol/Re):', VOL(INDICE(1)), &
+          WRITE(*,*) 'Cubes sorted by volume:'
+          WRITE(*,*) 'Largest (vol/Re):', VOL(INDICE(1)), &
                                           ((3.*VOL(INDICE(1)))/(4.*PI))**0.333
-          WRITE(*,*) 'Smallest protovoid (vol/Re):', VOL(INDICE(NVOID)), &
+          WRITE(*,*) 'Smallest (vol/Re):', VOL(INDICE(NVOID)), &
                                           ((3.*VOL(INDICE(NVOID)))/(4.*PI))**0.333
           WRITE(*,*) '************************************************'
           WRITE(*,*)
@@ -1171,12 +1171,12 @@
           ALLOCATE(MARCA(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
 
 !*-------------------------------------------*
-!*      From protovoids to voids: MERGING
+!*      From cubes to voids: MERGING
 !*-------------------------------------------*
 
 
           WRITE(*,*) '************************************************'
-          WRITE(*,*) 'Merging protovoids ...'
+          WRITE(*,*) 'Merging cubes ...'
 
           call system_clock(t1,trate,tmax)
           CALL MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZC,NVOID2)
@@ -1261,7 +1261,7 @@
           ENDDO
 
           !Calculate centre for every void: maximum divergence
-          !This corresponds to the geometrical centre of the protovoid to which
+          !This corresponds to the geometrical centre of the cube to which
           !all the others are merged
           DO IV=1,NVOID
             IND=INDICE(IV)
@@ -1449,9 +1449,9 @@
           WRITE(10,*) IR, NVOID, NVOIDT, NVOIDP, VOLT_CLEAN/(LADO0**3)
 
 
-          !Optional: protovoids file, written at the same time that catalogue file
-          !^^^^^^^^^^^^^^HEADER(Protovoids)^^^^^^^^^^^^^^^^
-          IF (FLAG_WRITE_PROTO .EQ. 1) THEN
+          !Optional: cubes file, written at the same time that catalogue file
+          !^^^^^^^^^^^^^^HEADER(cubes)^^^^^^^^^^^^^^^^
+          IF (FLAG_WRITE_CUBES .EQ. 1) THEN
              WRITE(12,*) IR, NVOID, NVOIDT
           END IF
 
@@ -1459,8 +1459,8 @@
           DO IV=1, NVOID
              IND=INDICE(IV)
          
-             !protovoids making up voids
-             IF(FLAG_WRITE_PROTO .EQ. 1) THEN
+             !cubes making up voids
+             IF(FLAG_WRITE_CUBES .EQ. 1) THEN
                 WRITE(12,*) IND, UVOID(IND), INICIOX(IND), FINALX(IND), INICIOY(IND), FINALY(IND), &
                                              INICIOZ(IND), FINALZ(IND), RINIXCO(IND), RFINXCO(IND), &
                                              RINIYCO(IND), RFINYCO(IND), RINIZCO(IND), RFINZCO(IND)
@@ -1586,7 +1586,7 @@
 
 
        CLOSE(10)
-       IF (FLAG_WRITE_PROTO .EQ. 1) CLOSE(12)
+       IF (FLAG_WRITE_CUBES .EQ. 1) CLOSE(12)
       !  IF (FLAG_WRITE_PIECES .EQ. 1) CLOSE(13)
        CLOSE(11)
        WRITE(*,*)

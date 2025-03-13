@@ -57,14 +57,14 @@ def read_void_catalogue(it, path='', output_format = 'dictionaries', ret_details
             levels = []
             for ilev in range(nlev):
                 this_level = {}
-                lev, nproto, nvoids, nparents, FF = void_catalogue.readline().split()
+                lev, ncubes, nvoids, nparents, FF = void_catalogue.readline().split()
                 lev = int(lev)
-                nproto = int(nproto)
+                ncubes = int(ncubes)
                 nvoids = int(nvoids)
                 nparents = int(nparents)
                 FF = float(FF)
                 this_level['level'] = lev
-                this_level['nproto'] = nproto
+                this_level['ncubes'] = ncubes
                 this_level['nvoids'] = nvoids
                 this_level['nparents'] = nparents
                 this_level['FF'] = FF
@@ -107,9 +107,9 @@ def read_void_catalogue(it, path='', output_format = 'dictionaries', ret_details
         return void_details
 
 
-def read_protovoids(it, path='', output_format = 'dictionaries'):
+def read_cubes(it, path='', output_format = 'dictionaries'):
     """
-    Reads the protovoidXXXXX files, containing all protovoids making up the final void catalogue
+    Reads the cubesXXXXX files, containing all cubes making up the final void catalogue
 
     Args:
         it: iteration number (int)
@@ -117,13 +117,13 @@ def read_protovoids(it, path='', output_format = 'dictionaries'):
         output_format: 'dictionaries' or 'arrays'   
 
     Returns:
-        List of dictionaries, one per level, containing the protovoids data:
+        List of dictionaries, one per level, containing the cube data:
         - 'level': level number (int)
-        - 'nproto': number of protovoids (int)
+        - 'ncubes': number of cubes (int)
         - 'nmains': number of main voids (int)
-        - 'protovoids': list of dictionaries, one per protovoid, containing the following
-            - 'id': protovoid ID (int)
-            - 'uvoid': -1 (it's main), 0 (discarted), main void ID to which it belongs
+        - 'cubes': list of dictionaries, one per cube, containing the following
+            - 'id': cube ID (int)
+            - 'uvoid': -1 (it's main), 0 (discarted), >0 main void ID to which it belongs
             - 'ini_ix', 'end_ix': initial and final x indices (int) on the grid
             - 'ini_iy', 'end_iy': initial and final y indices (int) on the grid
             - 'ini_iz', 'end_iz': initial and final z indices (int) on the grid
@@ -133,11 +133,11 @@ def read_protovoids(it, path='', output_format = 'dictionaries'):
             - 
     """
 
-    fname = 'protovoids{:05d}'.format(it)
+    fname = 'cubes{:05d}'.format(it)
 
-    with open(os.path.join(path, fname), 'r') as pvoid_catalogue:
+    with open(os.path.join(path, fname), 'r') as cube_catalogue:
         # Level data
-        header = pvoid_catalogue.readline().split()
+        header = cube_catalogue.readline().split()
         nlev = int(header[0])
         levmin = int(header[1])
         levmax = int(header[2])
@@ -145,40 +145,40 @@ def read_protovoids(it, path='', output_format = 'dictionaries'):
         levels = []
         for ilev in range(nlev):
             this_level = {}
-            lev, nproto, nmains = pvoid_catalogue.readline().split()
+            lev, ncubes, nmains = cube_catalogue.readline().split()
             lev = int(lev)
-            nproto = int(nproto)
+            ncubes = int(ncubes)
             nmains = int(nmains)
             this_level['level'] = lev
-            this_level['nproto'] = nproto
+            this_level['ncubes'] = ncubes
             this_level['nmains'] = nmains
     
-            # protovoid data
-            pvoids=[]
-            for iv in range(nproto):
-                void = {}
-                data_line = np.array(pvoid_catalogue.readline().split()).astype('f4')
-                void['id'] = int(data_line[0])
-                void['uvoid'] = int(data_line[1])
-                void['ini_ix'] = int(data_line[2])
-                void['end_ix'] = int(data_line[3])
-                void['ini_iy'] = int(data_line[4])
-                void['end_iy'] = int(data_line[5])
-                void['ini_iz'] = int(data_line[6])
-                void['end_iz'] = int(data_line[7])
-                void['ini_rx'] = data_line[8]
-                void['end_rx'] = data_line[9]
-                void['ini_ry'] = data_line[10]
-                void['end_ry'] = data_line[11]
-                void['ini_rz'] = data_line[12]
-                void['end_rz'] = data_line[13]
+            # cube data
+            cubevoids=[]
+            for iv in range(ncubes):
+                C = {}
+                data_line = np.array(cube_catalogue.readline().split()).astype('f4')
+                C['id'] = int(data_line[0])
+                C['uvoid'] = int(data_line[1])
+                C['ini_ix'] = int(data_line[2])
+                C['end_ix'] = int(data_line[3])
+                C['ini_iy'] = int(data_line[4])
+                C['end_iy'] = int(data_line[5])
+                C['ini_iz'] = int(data_line[6])
+                C['end_iz'] = int(data_line[7])
+                C['ini_rx'] = data_line[8]
+                C['end_rx'] = data_line[9]
+                C['ini_ry'] = data_line[10]
+                C['end_ry'] = data_line[11]
+                C['ini_rz'] = data_line[12]
+                C['end_rz'] = data_line[13]
 
-                pvoids.append(void)
+                cubevoids.append(C)
 
             if output_format=='dictionaries':
-                this_level['protovoids'] = pvoids
+                this_level['cubes'] = cubevoids
             elif output_format=='arrays':
-                this_level['protovoids'] = {k: np.array([v[k] for v in pvoids]) for k in pvoids[0].keys()}
+                this_level['cubes'] = {k: np.array([v[k] for v in cubevoids]) for k in cubevoids[0].keys()}
 
             levels.append(this_level)
 

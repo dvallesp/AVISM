@@ -414,18 +414,18 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
 !$OMP END DO
 !$OMP END PARALLEL
 
-WRITE(*,*) '       Conditions for protovoid expansion set'
-WRITE(*,*) '       Starting protovoid search'
+WRITE(*,*) '       Conditions for cube expansion set'
+WRITE(*,*) '       Starting search of void zones'
 
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 !$$$$$$$$   loop on potential centers, starting from cells with max diver    $$$$$$$$$$$$$$$
 
-!PROTOVOID COUNT
+!CUBE COUNT
 NVOID=0
 
-!INDICATES IF A CELL IS ALREADY PART OF A PROTOVOID
+!INDICATES IF A CELL IS ALREADY PART OF A CUBE
 ALLOCATE(MARCA_AUX(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
 MARCA_AUX = 0
 
@@ -475,7 +475,7 @@ DO L1=1, NXYZ
    
    !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   !%%%%%   start expanding the protovoids in all the directions    %%%%%%%%%%%%%%%%%%%
+   !%%%%%   start expanding the cubes in all the directions    %%%%%%%%%%%%%%%%%%%
 
    FLAG2=0 !for excluding voids after DO WHILE
    !FLAG -> for stopping expansion in DO WHILE
@@ -875,7 +875,7 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
         !xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         !xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-        ! Cells belonging to this protovoid, plus NBUFF expanding to detect 
+        ! Cells belonging to this cube, plus NBUFF expanding to detect 
         ! voids touching it but not overlapping
         IX1 = INICIOX(IND1) - NBUFF
         IX2 = FINALX(IND1)  + NBUFF
@@ -889,7 +889,7 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
         TAR(2) = GYC(IND1)
         TAR(3) = GZC(IND1) 
 
-        !Sphere containing this protovoid
+        !Sphere containing this cube
         RTHIS = SQRT(3.)/2.*VOLNEW(IND1)**(1./3.)
 
         !query radius

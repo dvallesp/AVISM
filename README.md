@@ -27,7 +27,7 @@ Developed at the Departament d'Astronomia i Astrofísica of Universitat de Valè
 
 1. All cells satysfing $\delta > \delta_1$ and $\nabla \cdot \mathbf{v} > 0$ are marked as potential void centres.
 2. These cells are expanded, starting from the cell with maximum divergence in descending order, until one of the following criteria is fulfilled:
-    * $\nabla\delta >\nabla\delta_\text{th}$
+    * $|\nabla\delta| > |\nabla\delta|_\text{th}$
     * $\nabla \cdot \mathbf{v} < 0$
     * $\delta > \delta_\text{2}$
 3. After the previous step, the code obtains a set of overlapping cubes covering all regions potentially belonging to a void. The next step consists of merging these cubes in a volume-ordered way, starting with the biggest, such that voids are built all synchronously, starting by the core regions (biggest cubes) until reaching the boundaries (smaller cubes).
@@ -220,7 +220,7 @@ Particle data can be handled in different ways, as the code allows for different
 
 * $N_\ell$ /  $\ell_{min}$ /  $\ell_{max}$  /  $N_x^0$ /  $N_Y^0$ /  $N_z^0$  /  $L$
   
-   - $\ell$ / $N_{proto}$ / $N_{voids}$ / $N_{\ell-1}$ / FF
+   - $\ell$ / $N_{cubes}$ / $N_{voids}$ / $N_{\ell-1}$ / FF
      
       - ID / $X$ / $Y$ / $Z$ / $X_G$ / $Y_G$ / $Z_G$ / Vol / $R$ / $\overline{\rho}$ / $\epsilon$ / IP / ID($\ell-1$) / $R(\ell-1)$ / Mass
         
@@ -252,7 +252,7 @@ Below, we provide three tables (one for each type of information given in `voids
 | Level variable  | Description |
 | ------------- | ------------- |
 | $\ell$  | Which level  |
-| $N_{proto}$ | Number of protovoids found by the first void-finding step  |
+| $N_{cubes}$ | Number of cubes found by the first void-finding step  |
 | $N_{voids}$ | Final number of voids after merging and post-processing |
 | $N_{\ell-1}$  | Number of voids in the previous level (parent voids) |
 | FF  | Volume filling fraction of voids at this grid level |
@@ -261,8 +261,8 @@ Below, we provide three tables (one for each type of information given in `voids
 
 | Void property  | Description |
 | ------------- | ------------- |
-| ID | Void ID, corresponding to the ID of the biggest protovoid belonging to it |
-| $X$, $Y$, $Z$| Void centre coordinates, defined as the centre of the biggest protovoid belonging to it |
+| ID | Void ID, corresponding to the ID of the biggest cube belonging to it |
+| $X$, $Y$, $Z$| Void centre coordinates, defined as the centre of the biggest cube belonging to it |
 | $X_G$, $Y_G$, $Z_G$| Void volume-weighed (geometrical) centre |
 | Vol | Void total volume (in $\text{Mpc}^3$) |
 | $R$ | Void effective radius (in Mpc)|

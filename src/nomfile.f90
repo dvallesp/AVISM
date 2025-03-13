@@ -27,7 +27,7 @@
 
        FILNOMO=TRIM(ADJUSTL(DIR))//'/voids'//NOM !list of voids
        FILNOMO1=TRIM(ADJUSTL(DIR))//'/map'//NOM
-       FILNOMO2=TRIM(ADJUSTL(DIR))//'/protovoids'//NOM
+       FILNOMO2=TRIM(ADJUSTL(DIR))//'/cubes'//NOM
        FILNOMO3=TRIM(ADJUSTL(DIR))//'/void_pieces'//NOM
 
 !**********************************************************************
