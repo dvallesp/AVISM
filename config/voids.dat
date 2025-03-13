@@ -1,0 +1,67 @@
+*************PARAMETERS FOR VOIDFINDER.F90**********
+*******************************************************************************
+*       General parameters block                                      
+*******************************************************************************
+files: first, last, every ---------------------------------------------------->
+1,1,1
+cells for the coarser grid --------------------------------------------------->
+128,128,128
+min and max levels of the hierarchies to be used by voidfind   --------------->
+0,0
+Hubble constant , h, omega matter -------------------------------------------->
+0.678,0.31
+comoving box size ------------------------------------------------------------>
+147.5
+periodic boundary conditions -> 0: no, 1: yes -------------------------------->
+0
+*******************************************************************************
+*       Void finder input parameters                                      
+*******************************************************************************
+maximum number of voids for dimensioning ------------------------------------->
+30000000
+density contrast threshold for centers --------------------------------------->
+-0.8
+density contrast threshold for the edges ------------------------------------->
+10.
+density gradient threshold --------------------------------------------------->
+0.25
+min void radius (in Mpc) ----------------------------------------------------->
+3.
+min void radius to look for subvoids (in Mpc) -------------------------------->
+3.
+*******************************************************************************
+*       Type of data to process                                   
+*******************************************************************************
+type of data -> 0: MASCLET, 1: Bin. File Part, 2: Bin. File Grid,  ----------->
+1
+IF MASCLET or Grid data: NX, NY, NZ ------------------------------------------>
+128,128,128
+*******************************************************************************
+*       Particle data handling parameters                                   
+*******************************************************************************
+maximum number of particles to read (DIMENSIONING) --------------------------->
+2000000000
+particle velocity is available -> 0: no, 1: yes ------------------------------>
+1
+interpolation scheme for particle velocity field (0:TSC, 1:SPH) -------------->
+1
+interpolation scheme for particle density field (0:TSC, 1:SPH) --------------->
+1
+k-nearest neighbors to use to transform into grid ---------------------------->
+32
+*******************************************************************************
+*       Output management parameters
+*******************************************************************************
+whether to write protovoids that are merged to form voids -> 0: no, 1: yes --->
+1
+whether to write the parallelepipeds deconstructing voids -> 0: no, 1: yes --->
+0
+*******************************************************************************
+*       MASCLET ONLY (skip if another type of input is used)                               
+*******************************************************************************
+NPALEV, NLEVELS, NAMRX, NAMRY, NAMRZ ----------------------------------------->
+45000,10,64,64,64
+which velocity for divergence -> 0: all, 1: DM, 2: gas ----------------------->
+1
+which density field to use -> 0: all, 1: DM, 2: gas -------------------------->
+1
