@@ -73,6 +73,10 @@
        INTEGER:: NUM, OMP_GET_NUM_THREADS
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+       !MISC
+       INTEGER :: FLAG_STOP
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       !  !!!!!!!!!!!!!!
       !  !Void deconstruction variables
       !  INTEGER :: dNVOID
@@ -406,6 +410,32 @@
             CALL READ_BINARY_PART_2(ITER, ZETA)
             call system_clock(t2,trate,tmax)
          ENDIF
+
+         !CHECK PARTICLES INSIDE THE BOUNDING BOX
+         FLAG_STOP = 0
+         
+         !$OMP PARALLEL SHARED(NPARTT, RXPA, RYPA, RZPA, LADO0), &
+         !$OMP PRIVATE(I)
+         !$OMP DO REDUCTION(+:FLAG_STOP)
+         DO I=1,NPARTT
+            IF ( (RXPA(I) .LT. -LADO0/2 .OR. RXPA(I) .GT. LADO0/2) .OR. &
+                 (RYPA(I) .LT. -LADO0/2 .OR. RYPA(I) .GT. LADO0/2) .OR. &
+                 (RZPA(I) .LT. -LADO0/2 .OR. RZPA(I) .GT. LADO0/2) ) THEN
+                  FLAG_STOP = 1
+            ENDIF
+         ENDDO
+         !$OMP END DO
+         !$OMP END PARALLEL
+
+         IF (FLAG_STOP .GE. 1) WRITE(*,*)
+         IF (FLAG_STOP .GE. 1) WRITE(*,*)
+         IF (FLAG_STOP .GE. 1) WRITE(*,*) 'Particles outside the bounding box! Check L0!'
+         IF (FLAG_STOP .GE. 1) WRITE(*,*)
+         IF (FLAG_STOP .GE. 1) WRITE(*,*) 'STOPPING...'
+         IF (FLAG_STOP .GE. 1) WRITE(*,*)
+
+         IF (FLAG_STOP .GE. 1) STOP
+         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
        ELSE IF (FLAG_DATA .EQ. 2) THEN
          WRITE(*,*) 'Binary grid data...'
