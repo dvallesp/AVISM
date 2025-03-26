@@ -88,6 +88,7 @@
       !  !!!!!!!!!!!!!!
 
        !kd-tree and SPH Related
+       INTEGER :: FLAG_KD
        REAL, ALLOCATABLE :: HPART(:)
        type(KDTreeNode), pointer :: TREE
        REAL*4, ALLOCATABLE :: XTREE(:), YTREE(:), ZTREE(:)
@@ -388,7 +389,7 @@
        WRITE(*,*) 'Reading input...' 
 
 !*-------------------------------------------------------------------------------*
-!*     READING DATA 
+!*     READING AND SETTING DATA 
 !*-------------------------------------------------------------------------------*
        
        IF (FLAG_DATA .EQ. 0) THEN
@@ -492,7 +493,23 @@
        ! Building k-d tree
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       IF (FLAG_VEL_INTERP .EQ. 1 .OR. FLAG_DENS_INTERP .EQ. 1) THEN
+
+       FLAG_KD = 0
+       !MASCLET k-d tree only if dark-matter sph is required
+       IF (FLAG_DATA .EQ. 0) THEN
+         !DARK-MATTER used
+         IF (FLAG_DENS .LE. 1 .OR. FLAG_DIV .LE. 1) THEN 
+         !SPH used
+         IF (FLAG_VEL_INTERP .EQ. 1 .OR. FLAG_DENS_INTERP .EQ. 1) THEN
+            FLAG_KD = 1
+         ENDIF
+         ENDIF
+       !PARTICLE DATA ALWAYS REQUIRES SPH SMOOTHING
+       ELSE IF (FLAG_DATA .EQ. 1) THEN
+         FLAG_KD = 1
+       ENDIF
+
+       IF (FLAG_KD .EQ. 1) THEN
          
          WRITE(*,*) 'Building k-d tree'
 
@@ -1654,12 +1671,10 @@
       !---------------------------------------
       ! Deallocate k-d tree variables (if needed)
       !--------------------------------------- 
-      IF (FLAG_DATA .NE. 2) THEN
-      IF (FLAG_VEL_INTERP .EQ. 1 .OR. FLAG_DENS_INTERP .EQ. 1) THEN
+       IF (FLAG_KD .EQ. 1) THEN
          DEALLOCATE(TREE)
          DEALLOCATE(HPART)
-      END IF
-      END IF
+       ENDIF
       !---------------------------------------
 
 !*////////////////////////////////////
