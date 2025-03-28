@@ -2,7 +2,9 @@
 
 ## About
 
-Developed at the Departament d'Astronomia i Astrofísica of Universitat de València by Óscar Monllor-Berbegal in collaboration with David Vallés-Pérez, Susana Planelles and Vicent Quilis.
+Developed at the Departament d'Astronomia i Astrofísica of Universitat de València by Óscar Monllor-Berbegal in collaboration with David Vallés-Pérez, Susana Planelles and Vicent Quilis. This work has been supported by the European Union NextGenerationEU (PRTR-C17.I1), the Spanish Ministerio de Ciencia e Innovación(ASFAE/2022/001 and PID2022-138855NB-C33), the Generalitat Valenciana (CIPROM/2022/49), and Óscar Monllor-Berbegal acknowledges support from Universitat de València through an Atracció de Talent fellowship.
+
+
 
 ## Index of contents 
 
