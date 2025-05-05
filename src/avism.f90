@@ -18,7 +18,7 @@
 !-------------------------------------------------------
 !-------------------------------------------------------
        USE COMMONDATA
-       USE KDTREE_MOD
+       USE COSMOKDTREE
        USE PARTICLES
        
        IMPLICIT NONE
@@ -91,7 +91,7 @@
        INTEGER :: FLAG_KD
        REAL, ALLOCATABLE :: HPART(:)
        type(KDTreeNode), pointer :: TREE
-       REAL*4, ALLOCATABLE :: XTREE(:), YTREE(:), ZTREE(:)
+       REAL*4, ALLOCATABLE :: TREEPOINTS(:,:)
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        
        !Periodic boundary conditions
@@ -515,15 +515,15 @@
          
          WRITE(*,*) 'Building k-d tree'
 
-         ALLOCATE(HPART(NPARTT),XTREE(NPARTT),YTREE(NPARTT),ZTREE(NPARTT))
+         ALLOCATE(HPART(NPARTT),TREEPOINTS(NPARTT,3))
 
          HPART(:) = 0.
-         XTREE(:) = RXPA(1:NPARTT)
-         YTREE(:) = RYPA(1:NPARTT)
-         ZTREE(:) = RZPA(1:NPARTT)
+         TREEPOINTS(:,1) = RXPA(1:NPARTT)
+         TREEPOINTS(:,2) = RYPA(1:NPARTT)
+         TREEPOINTS(:,3) = RZPA(1:NPARTT)
 
          call system_clock(t1,trate,tmax)
-         TREE => build_kdtree_init(XTREE,YTREE,ZTREE)
+         TREE => build_kdtree(TREEPOINTS)
          call system_clock(t2,trate,tmax)
 
          WRITE(*,*) '///////////// Time (sec) spent building k-d tree ',float(t2-t1)/1.e3
@@ -1675,6 +1675,7 @@
       !--------------------------------------- 
        IF (FLAG_KD .EQ. 1) THEN
          DEALLOCATE(TREE)
+         DEALLOCATE(TREEPOINTS)
          DEALLOCATE(HPART)
        ENDIF
       !---------------------------------------

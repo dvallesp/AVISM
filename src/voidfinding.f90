@@ -700,7 +700,7 @@ END SUBROUTINE VOIDFIND
 SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZC,NVOID2)
 !******************************************************************************************* 
      USE COMMONDATA
-     USE KDTREE_MOD
+     USE COSMOKDTREE
      IMPLICIT NONE
 !input variables
      INTEGER:: NVOID
@@ -721,6 +721,7 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
      INTEGER:: DIST,DIST2
 !output variables
      REAL*4, DIMENSION(NVOID)::GXC,GYC,GZC !geometrical center of the void
+     REAL*4 :: TREEPOINTS(NVOID,3)
      REAL*4, DIMENSION(NVOID):: VOLNEW
      INTEGER, DIMENSION(NVOID):: UVOID
 !k-d tree
@@ -756,7 +757,10 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
      ENDDO
      
      !Build k-d tree for fast neighbour search
-     TREE => build_kdtree_init(GXC,GYC,GZC)
+     TREEPOINTS(:,1)=GXC(:)
+     TREEPOINTS(:,2)=GYC(:)
+     TREEPOINTS(:,3)=GZC(:)
+     TREE => build_kdtree(TREEPOINTS)
 
      UVOID(:)=-1 !if 0, void has been merged or is unable to be merged, 
                  !if -1 it needs to be merged
@@ -894,7 +898,7 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
         !query radius
         RR = (2*RTHIS) + 2.1*SQRT(3.)*DXX*NBUFF
 
-        QUERY = ball_search_init(TREE, TAR, RR) 
+        QUERY = ball_search(TREE, TAR, RR) 
         CONTA = SIZE(QUERY%idx)
 
          ! DO J=I+1,NVOID
@@ -1335,7 +1339,6 @@ SUBROUTINE VOID_PERIODIC(NVOID,INDICE,UVOID,GXC,GYC,GZC,VOLNEW, &
                         NX,NY,NZ,DX,DY,DZ,LOW1,LOW2)
 !Checks voids having cells outside the box and finds the periodic images
 !***************************************************************************
-   USE KDTREE_MOD
    USE COMMONDATA, ONLY: LADO0, LADO0PLUS, MARCA, PI, RADX, RADY, RADZ
    IMPLICIT NONE
    !input variables

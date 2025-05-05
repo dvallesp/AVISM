@@ -269,7 +269,7 @@ CONTAINS
    !this subroutine calculates the kernel distance h(x) for every cell x
    !required by DDENS_INTERP_SPH if VVEL_INTERP_SPH is not used
 !********************************************************************************  
-         USE KDTREE_MOD 
+         USE COSMOKDTREE
          USE COMMONDATA, ONLY: KNEIGHBOURS,DX,DY,DZ,RADX,RADY,RADZ,PARTIRED
 
          IMPLICIT NONE
@@ -305,7 +305,7 @@ CONTAINS
 
                   !Search cell's kneighbours
                   ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
-                  QUERY = knn_search_init(TREE, TAR, KNEIGHBOURS)
+                  QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
                   DIST = QUERY%dist
                   NEIGH = QUERY%idx
          
@@ -313,7 +313,7 @@ CONTAINS
                   CONTA=KNEIGHBOURS 
                   ELSE 
                   DEALLOCATE(DIST,NEIGH)
-                  QUERY = ball_search_init(TREE, TAR, DX)
+                  QUERY = ball_search(TREE, TAR, DX)
                   CONTA = SIZE(QUERY%dist)
                   ALLOCATE(DIST(CONTA), NEIGH(CONTA))
                   DIST = QUERY%dist
@@ -478,7 +478,7 @@ CONTAINS
    SUBROUTINE VVEL_INTERP_SPH(NX,NY,NZ,NPARTT,TREE, &
                         HPART,MASAP,U2PA,U3PA,U4PA,U2,U3,U4)
 !********************************************************************************
-         USE KDTREE_MOD 
+         USE COSMOKDTREE 
          USE COMMONDATA, ONLY: KNEIGHBOURS,DX,DY,DZ,RADX,RADY,RADZ,PARTIRED
 
          IMPLICIT NONE
@@ -521,7 +521,7 @@ CONTAINS
 
                   !Search cell's kneighbours
                   ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
-                  QUERY = knn_search_init(TREE, TAR, KNEIGHBOURS)
+                  QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
                   DIST = QUERY%dist
                   NEIGH = QUERY%idx
 
@@ -529,7 +529,7 @@ CONTAINS
                      CONTA=KNEIGHBOURS 
                   ELSE 
                      DEALLOCATE(DIST,NEIGH)
-                     QUERY = ball_search_init(TREE, TAR, DX)
+                     QUERY = ball_search(TREE, TAR, DX)
                      CONTA = SIZE(QUERY%dist)
                      ALLOCATE(DIST(CONTA), NEIGH(CONTA))
                      DIST = QUERY%dist
