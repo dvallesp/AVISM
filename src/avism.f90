@@ -173,6 +173,8 @@
        READ(1,*) 
        READ(1,*) GRAD_THRE
        READ(1,*) 
+       READ(1,*) DIV_THRE
+       READ(1,*) 
        READ(1,*) RMIN
        READ(1,*) 
        READ(1,*) RMIN_SUB

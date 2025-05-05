@@ -75,7 +75,6 @@ INTEGER, ALLOCATABLE :: FLAGY1_GRID(:,:,:),FLAGY2_GRID(:,:,:),FLAGZ1_GRID(:,:,:)
 
 !parameters
 INTEGER NSEC
-REAL*4, PARAMETER:: DIV_THRES=0. 
 
 !PBC:
 INTEGER :: LOW1, LOW2
@@ -242,9 +241,9 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
 !$OMP END PARALLEL
 
 
-!$OMP PARALLEL SHARED(LOW1,LOW2,DIVERCO,U1CO,FLAG_DIV_P,FLAG_NEXT_GRAD_P,&
+!$OMP PARALLEL SHARED(LOW1,LOW2,DIVERCO,U1CO,FLAG_DIV_P,FLAG_NEXT_GRAD_P,DIV_THRE,&
 !$OMP FLAGX1_GRID,FLAGX2_GRID,FLAGY1_GRID,FLAGY2_GRID,FLAGZ1_GRID,FLAGZ2_GRID, &
-!$OMP FLAG1_GRID,MARCAP2,REQP,RMIN_SUB,FLAG_SUB,DDX,DDY,DDZ,GRAD_THRE,DENS_THRE2, NSEC_P), &
+!$OMP FLAG1_GRID,MARCAP2,REQP,RMIN_SUB,FLAG_SUB,DDX,DDY,DDZ,GRAD_THRE,DENS_THRE2,NSEC_P), &
 !$OMP     PRIVATE(II,IX,JY,KZ,REQ0,INDV,DDENS,DDENS2), DEFAULT(NONE)
 !$OMP DO REDUCTION(+:FLAGX1_GRID,FLAGX2_GRID,FLAGY1_GRID,FLAGY2_GRID, &
 !$OMP                FLAGZ1_GRID,FLAGZ2_GRID,FLAG1_GRID)
@@ -272,7 +271,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                !+X GRADIENT
                IF(II .EQ. LOW2) THEN
                   !only check divergence and density
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRES) FLAGX2_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRE) FLAGX2_GRID(IX,JY,KZ)=1
                   IF(U1CO(II,JY,KZ) .GE. DENS_THRE2+1.) FLAGX2_GRID(IX,JY,KZ)=1
                ELSE
                   DDENS = (U1CO(II+1,JY,KZ)-U1CO(II-1,JY,KZ))/(2.D0*DDX)
@@ -282,7 +281,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                      DDENS2=(U1CO(II+2,JY,KZ)-U1CO(II,JY,KZ))/(2.D0*DDX)
                      IF(DDENS2 .LT. GRAD_THRE) FLAGX2_GRID(IX,JY,KZ)=0
                   ENDIF
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRES) FLAGX2_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRE) FLAGX2_GRID(IX,JY,KZ)=1
                   IF(U1CO(II,JY,KZ) .GE. DENS_THRE2+1.) FLAGX2_GRID(IX,JY,KZ)=1
                ENDIF
             ENDIF
@@ -296,7 +295,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                !+X GRADIENT
                IF(II .EQ. LOW1) THEN
                   !only check divergence and density
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRES) FLAGX1_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRE) FLAGX1_GRID(IX,JY,KZ)=1
                   IF(U1CO(II,JY,KZ) .GE. DENS_THRE2+1.) FLAGX1_GRID(IX,JY,KZ)=1
                ELSE
                   DDENS = (U1CO(II-1,JY,KZ)-U1CO(II+1,JY,KZ))/(2.D0*DDX)
@@ -306,7 +305,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                      DDENS2=(U1CO(II-2,JY,KZ)-U1CO(II,JY,KZ))/(2.D0*DDX)
                      IF(DDENS2 .LT. GRAD_THRE) FLAGX1_GRID(IX,JY,KZ)=0
                   ENDIF
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRES) FLAGX1_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(II,JY,KZ) .LT. DIV_THRE) FLAGX1_GRID(IX,JY,KZ)=1
                   IF(U1CO(II,JY,KZ) .GE. DENS_THRE2+1.) FLAGX1_GRID(IX,JY,KZ)=1
                ENDIF
             ENDIF
@@ -320,7 +319,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                !+Y GRADIENT
                IF(II .EQ. LOW2) THEN
                   !only check divergence and density
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRES) FLAGY2_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRE) FLAGY2_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,II,KZ) .GE. DENS_THRE2+1.) FLAGY2_GRID(IX,JY,KZ)=1
                ELSE
                   DDENS = (U1CO(IX,II+1,KZ)-U1CO(IX,II-1,KZ))/(2.D0*DDY)
@@ -330,7 +329,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                      DDENS2=(U1CO(IX,II+2,KZ)-U1CO(IX,II,KZ))/(2.D0*DDY)
                      IF(DDENS2 .LT. GRAD_THRE) FLAGY2_GRID(IX,JY,KZ)=0
                   ENDIF
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRES) FLAGY2_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRE) FLAGY2_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,II,KZ) .GE. DENS_THRE2+1.) FLAGY2_GRID(IX,JY,KZ)=1
                ENDIF
             ENDIF
@@ -344,7 +343,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                !+Y GRADIENT
                IF(II .EQ. LOW1) THEN
                   !only check divergence and density
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRES) FLAGY1_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRE) FLAGY1_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,II,KZ) .GE. DENS_THRE2+1.) FLAGY1_GRID(IX,JY,KZ)=1
                ELSE
                   DDENS = (U1CO(IX,II-1,KZ)-U1CO(IX,II+1,KZ))/(2.D0*DDY)
@@ -354,7 +353,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                      DDENS2=(U1CO(IX,II-2,KZ)-U1CO(IX,II,KZ))/(2.D0*DDY)
                      IF(DDENS2 .LT. GRAD_THRE) FLAGY1_GRID(IX,JY,KZ)=0
                   ENDIF
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRES) FLAGY1_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,II,KZ) .LT. DIV_THRE) FLAGY1_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,II,KZ) .GE. DENS_THRE2+1.) FLAGY1_GRID(IX,JY,KZ)=1
                ENDIF
             ENDIF
@@ -368,7 +367,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                !+Z GRADIENT
                IF(II .EQ. LOW2) THEN
                   !only check divergence and density
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRES) FLAGZ2_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRE) FLAGZ2_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,JY,II) .GE. DENS_THRE2+1.) FLAGZ2_GRID(IX,JY,KZ)=1
                ELSE
                   DDENS = (U1CO(IX,JY,II+1)-U1CO(IX,JY,II-1))/(2.D0*DDZ)
@@ -378,7 +377,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                      DDENS2=(U1CO(IX,JY,II+2)-U1CO(IX,JY,II))/(2.D0*DDZ)
                      IF(DDENS2 .LT. GRAD_THRE) FLAGZ2_GRID(IX,JY,KZ)=0
                   ENDIF
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRES) FLAGZ2_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRE) FLAGZ2_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,JY,II) .GE. DENS_THRE2+1.) FLAGZ2_GRID(IX,JY,KZ)=1
                ENDIF
             ENDIF
@@ -392,7 +391,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                !+Z GRADIENT
                IF(II .EQ. LOW1) THEN
                   !only check divergence and density
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRES) FLAGZ1_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRE) FLAGZ1_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,JY,II) .GE. DENS_THRE2+1.) FLAGZ1_GRID(IX,JY,KZ)=1
                ELSE
                   DDENS = (U1CO(IX,JY,II-1)-U1CO(IX,JY,II+1))/(2.D0*DDZ)
@@ -402,7 +401,7 @@ ALLOCATE(FLAG1_GRID(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
                      DDENS2=(U1CO(IX,JY,II-2)-U1CO(IX,JY,II))/(2.D0*DDZ)
                      IF(DDENS2 .LT. GRAD_THRE) FLAGZ1_GRID(IX,JY,KZ)=0
                   ENDIF
-                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRES) FLAGZ1_GRID(IX,JY,KZ)=1
+                  IF(FLAG_DIV_P==1 .AND. DIVERCO(IX,JY,II) .LT. DIV_THRE) FLAGZ1_GRID(IX,JY,KZ)=1
                   IF(U1CO(IX,JY,II) .GE. DENS_THRE2+1.) FLAGZ1_GRID(IX,JY,KZ)=1
                ENDIF
             ENDIF
