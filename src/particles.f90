@@ -581,6 +581,158 @@ CONTAINS
    END SUBROUTINE VVEL_INTERP_SPH
    !************************************************************************
 
+!********************************************************************************
+   SUBROUTINE VVEL_INTERP_SPH_VW(NX,NY,NZ,NPARTT,TREE, &
+                        HPART,MASAP,U2PA,U3PA,U4PA,U2,U3,U4)
+!
+! SAME AS VVEL_INTERP_SPH BUT USING VOLUME WEIGHTING instead of MASS
+!********************************************************************************
+         USE COSMOKDTREE 
+         USE COMMONDATA, ONLY: KNEIGHBOURS,DX,DY,DZ,RADX,RADY,RADZ,PARTIRED, &   
+                              RXPA,RYPA,RZPA,PI
+
+         IMPLICIT NONE
+         !input variables
+         INTEGER NX,NY,NZ
+         INTEGER(KIND=8) :: NPARTT, CONTA, I, J
+         REAL*4 U2PA(PARTIRED),U3PA(PARTIRED),U4PA(PARTIRED)
+         REAL*4 MASAP(PARTIRED)
+         !LOCAL
+         INTEGER :: IX,JY,KZ
+         REAL*8 BAS8,BAS88,BAS8X,BAS8Y,BAS8Z
+
+         !h smoothing length for each particle
+         REAL*4 HKERN
+         REAL,ALLOCATABLE::DIST(:)
+         INTEGER(KIND=8),ALLOCATABLE::NEIGH(:)
+         !particle density
+         REAL*8 PART_DENS(NPARTT)
+         
+         !query
+         type(KDTreeNode), pointer, intent(in) :: TREE
+         type(KDTreeResult) :: QUERY
+         REAL*4 :: TAR(3)
+         !SPH related
+         REAL*4 :: HPART(NPARTT)
+         
+         !output
+         REAL*4 U2(NX,NY,NZ), U3(NX,NY,NZ), U4(NX,NY,NZ)
+
+         !$OMP PARALLEL DO SHARED(KNEIGHBOURS,MASAP,TREE,RXPA,RYPA,RZPA,PI) &
+         !$OMP PRIVATE(I,J,QUERY,TAR,DIST,NEIGH, & 
+         !$OMP                HKERN,BAS8,BAS88,CONTA), REDUCTION(+:PART_DENS) &
+         !$OMP SCHEDULE(DYNAMIC), DEFAULT(NONE)
+         DO I=1,NPARTT
+            TAR(1) = RXPA(I)
+            TAR(2) = RYPA(I)
+            TAR(3) = RZPA(I)
+
+            !Search cell's kneighbours
+            ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
+            QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
+            DIST = QUERY%dist
+            NEIGH = QUERY%idx
+            CONTA = KNEIGHBOURS
+
+            !cell's smoothing length
+            HKERN=DIST(CONTA)
+
+            !KERNEL FUNCTION
+            CALL KERNEL_FUNC(CONTA,CONTA,HKERN,DIST)
+
+            !DIVIDED BY SPHERE CONTAINING PARTICLES
+
+            BAS8=0.D0
+            BAS88=0.D0
+            DO J=1,CONTA
+               BAS8=BAS8+DIST(J)
+               BAS88=BAS88+DIST(J)*MASAP(NEIGH(J))
+            END DO
+
+            PART_DENS(I) = BAS88 / BAS8 / &
+                           (4.D0/3.D0*PI*REAL(HKERN**3, KIND=8))
+            
+            DEALLOCATE(DIST,NEIGH)
+         ENDDO
+         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+         
+         !$OMP PARALLEL DO SHARED(KNEIGHBOURS,NX,NY,NZ,MASAP,U2PA,U3PA,U4PA,U2,U3,U4, &
+         !$OMP                   TREE,DX,DY,DZ,RADX,RADY,RADZ,PART_DENS) &
+         !$OMP PRIVATE(I,IX,JY,KZ,QUERY,TAR,DIST,NEIGH, & 
+         !$OMP               HKERN,BAS8,BAS8X,BAS8Y,BAS8Z,CONTA), REDUCTION(MAX:HPART) &
+         !$OMP SCHEDULE(DYNAMIC), DEFAULT(NONE)
+         DO KZ=1,NZ
+            DO JY=1,NY
+               DO IX=1,NX
+
+                  TAR(1) = RADX(IX)
+                  TAR(2) = RADY(JY)
+                  TAR(3) = RADZ(KZ)
+
+                  !Search cell's kneighbours
+                  ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
+                  QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
+                  DIST = QUERY%dist
+                  NEIGH = QUERY%idx
+
+                  IF (DIST(KNEIGHBOURS).GT.DX) THEN
+                     CONTA=KNEIGHBOURS 
+                  ELSE 
+                     DEALLOCATE(DIST,NEIGH)
+                     QUERY = ball_search(TREE, TAR, DX)
+                     CONTA = SIZE(QUERY%dist)
+                     ALLOCATE(DIST(CONTA), NEIGH(CONTA))
+                     DIST = QUERY%dist
+                     NEIGH = QUERY%idx
+                  END IF
+
+                  !!!! For SPH density interpolation !!!!!!!!!!!!
+                  !CHANGE VALUE OF HPART FOR ALL CELL NEIGHBOURS
+                  DO I=1,CONTA
+                     IF (DIST(I).GT.HPART(NEIGH(I))) THEN
+                        HPART(NEIGH(I)) = DIST(I)
+                     END IF
+                  END DO
+                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                  !cell's smoothing length
+                  HKERN=DIST(CONTA)
+                  !KERNEL FUNCTION
+                  CALL KERNEL_FUNC(CONTA,CONTA,HKERN,DIST)
+
+                  !VOLUME-weighting
+                  DO I=1,CONTA
+                     DIST(I)=DIST(I)*MASAP(NEIGH(I)) / &
+                              PART_DENS(NEIGH(I))
+                  END DO
+
+                  !averaging
+                  BAS8=0.D0
+                  BAS8X=0.D0
+                  BAS8Y=0.D0
+                  BAS8Z=0.D0
+                  DO I=1,CONTA 
+                     BAS8=BAS8+DIST(I)
+                     BAS8X=BAS8X+DIST(I)*U2PA(NEIGH(I))
+                     BAS8Y=BAS8Y+DIST(I)*U3PA(NEIGH(I))
+                     BAS8Z=BAS8Z+DIST(I)*U4PA(NEIGH(I))
+                  END DO
+
+                  U2(IX,JY,KZ)=BAS8X/BAS8
+                  U3(IX,JY,KZ)=BAS8Y/BAS8
+                  U4(IX,JY,KZ)=BAS8Z/BAS8
+                  
+                  DEALLOCATE(DIST,NEIGH)
+               ENDDO
+            ENDDO
+         ENDDO
+         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   !************************************************************************
+   END SUBROUTINE VVEL_INTERP_SPH_VW
+   !************************************************************************
+
 
 !************************************************************************
    SUBROUTINE KERNEL_FUNC(N,N2,W,DIST)

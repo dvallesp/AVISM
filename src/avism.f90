@@ -810,7 +810,7 @@
                                                 RXPA,RYPA,RZPA,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
                IF (FLAG_VEL_INTERP .EQ. 1) THEN
 
-                  CALL VVEL_INTERP_SPH(NXX,NYY,NZZ,NPARTT,TREE, &
+                  CALL VVEL_INTERP_SPH_VW(NXX,NYY,NZZ,NPARTT,TREE, &
                                  HPART,MASAP,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
 
                ENDIF
@@ -911,7 +911,7 @@
                                        RXPA,RYPA,RZPA,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
             IF (FLAG_VEL_INTERP .EQ. 1) THEN
 
-               CALL VVEL_INTERP_SPH(NXX,NYY,NZZ,NPARTT,TREE, &
+               CALL VVEL_INTERP_SPH_VW(NXX,NYY,NZZ,NPARTT,TREE, &
                      HPART,MASAP,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
 
             ENDIF              
