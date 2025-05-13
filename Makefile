@@ -1,3 +1,7 @@
+
+COMP := $(if $(COMP),$(COMP),1)
+$(info COMP = $(COMP))
+
 #### This is an example for a local machine ####
 ifeq ($(COMP),1)          
  FC=gfortran
@@ -23,6 +27,16 @@ BINDIR     := bin
 # -J is the directory where the .mod files are stored (BIN)
 FFLAGS  += -J $(BINDIR) 
 
+# cosmokdtree precompiled variables
+PERIODIC = 0
+LONGINT = 1
+DOUBLEPRECISION = 0
+DIMEN = 3
+
+FFLAGS_KDTREE = -cpp
+FFLAGS_KDTREE += $(FFLAGS)
+FFLAGS_KDTREE += -Dperiodic=$(PERIODIC) -Dlongint=$(LONGINT) -Ddoubleprecision=$(DOUBLEPRECISION) -Ddimen=$(DIMEN)
+ 
 # EXECUTABLE
 EXEC=voids.x
 
@@ -39,7 +53,7 @@ $(BINDIR)/commondata.o: $(SRCDIR)/commondata.f90
 
 # Rule for kdtree.o
 $(BINDIR)/kdtree.o: $(SRCDIR)/kdtree.f90
-	$(FC) $(FFLAGS) $(INC) -c -o $(BINDIR)/kdtree.o $(SRCDIR)/kdtree.f90
+	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/kdtree.o $(SRCDIR)/kdtree.f90
 
 # Rule for particles.o
 $(BINDIR)/particles.o: $(SRCDIR)/particles.f90
@@ -52,3 +66,13 @@ $(BINDIR)/avism.o: $(SRCDIR)/avism.f90 $(BINDIR)/commondata.o $(BINDIR)/kdtree.o
 # CLEAN
 clean:
 	rm -f $(BINDIR)/*.o $(BINDIR)/*.mod $(EXEC) *.mod
+
+info:
+	@echo ""
+	@echo "***********************************************************"
+	@echo "***                    AVISM                            ***"
+	@echo "***********************************************************"
+	@echo "* Óscar Monllor-Berbegal et al., Univ. de València, 2025  *"
+	@echo "***********************************************************"
+	@echo "*** FLAGS for compiling ***"
+	@echo "- COMP (optional, default: 1): 1 is a normal run, 2 is for debugging"
