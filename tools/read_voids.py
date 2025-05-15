@@ -319,9 +319,9 @@ def read_void_map(it, path='', output_marca=True, output_deltaTot=True, output_d
 
     with FF(os.path.join(path, f'map{it:05d}')) as f:
         for ilev in range(levmin, levmax+1):
-            nx_lev = int(nmax * 2**(ilev-levmin))
-            ny_lev = int(nmay * 2**(ilev-levmin))
-            nz_lev = int(nmaz * 2**(ilev-levmin))
+            nx_lev = int(nmax * 2**ilev)
+            ny_lev = int(nmay * 2**ilev)
+            nz_lev = int(nmaz * 2**ilev)
             if output_marca:
                 marca.append(f.read_ints('i4').reshape((nx_lev, ny_lev, nz_lev)).T)
             else:
