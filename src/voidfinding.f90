@@ -898,7 +898,7 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
         !query radius
         RR = (2*RTHIS) + 2.1*SQRT(3.)*DXX*NBUFF
 
-        QUERY = ball_search(TREE, TAR, RR) 
+        QUERY = ball_search(TREE, TAR, RR, .true.) 
         CONTA = SIZE(QUERY%idx)
 
          ! DO J=I+1,NVOID

@@ -13,7 +13,7 @@ MODULE COMMONDATA
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !MASCLET units
-      REAL*4 :: PI
+      REAL*8 :: PI
       REAL*4, PARAMETER :: UL = 10.98          !to Mpc
       REAL*4, PARAMETER :: UV = 299792.458     !to km/s
       REAL*4, PARAMETER :: UM = 9.1717E18      !to in Msun

@@ -313,7 +313,8 @@ CONTAINS
                   CONTA=KNEIGHBOURS 
                   ELSE 
                   DEALLOCATE(DIST,NEIGH)
-                  QUERY = ball_search(TREE, TAR, DX)
+                  !.true. stands for sorting
+                  QUERY = ball_search(TREE, TAR, DX, .true.)
                   CONTA = SIZE(QUERY%dist)
                   ALLOCATE(DIST(CONTA), NEIGH(CONTA))
                   DIST = QUERY%dist
@@ -529,7 +530,8 @@ CONTAINS
                      CONTA=KNEIGHBOURS 
                   ELSE 
                      DEALLOCATE(DIST,NEIGH)
-                     QUERY = ball_search(TREE, TAR, DX)
+                     !.true. stands for sorting
+                     QUERY = ball_search(TREE, TAR, DX, .true.)
                      CONTA = SIZE(QUERY%dist)
                      ALLOCATE(DIST(CONTA), NEIGH(CONTA))
                      DIST = QUERY%dist
@@ -603,7 +605,8 @@ CONTAINS
 
          !h smoothing length for each particle
          REAL*4 HKERN
-         REAL,ALLOCATABLE::DIST(:)
+         REAL*4,ALLOCATABLE::DIST(:)
+         REAL*8,ALLOCATABLE::DIST8(:)
          INTEGER(KIND=8),ALLOCATABLE::NEIGH(:)
          !particle density
          REAL*8 PART_DENS(NPARTT)
@@ -611,6 +614,7 @@ CONTAINS
          !query
          type(KDTreeNode), pointer, intent(in) :: TREE
          type(KDTreeResult) :: QUERY
+         
          REAL*4 :: TAR(3)
          !SPH related
          REAL*4 :: HPART(NPARTT)
@@ -619,7 +623,7 @@ CONTAINS
          REAL*4 U2(NX,NY,NZ), U3(NX,NY,NZ), U4(NX,NY,NZ)
 
          !$OMP PARALLEL DO SHARED(KNEIGHBOURS,MASAP,TREE,RXPA,RYPA,RZPA,PI) &
-         !$OMP PRIVATE(I,J,QUERY,TAR,DIST,NEIGH, & 
+         !$OMP PRIVATE(I,J,QUERY,TAR,DIST,DIST8,NEIGH, & 
          !$OMP                HKERN,BAS8,BAS88,CONTA), REDUCTION(+:PART_DENS) &
          !$OMP SCHEDULE(DYNAMIC), DEFAULT(NONE)
          DO I=1,NPARTT
@@ -630,8 +634,8 @@ CONTAINS
             !Search cell's kneighbours
             ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
             QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
-            DIST = QUERY%dist
             NEIGH = QUERY%idx
+            DIST = QUERY%dist
             CONTA = KNEIGHBOURS
 
             !cell's smoothing length
@@ -641,25 +645,27 @@ CONTAINS
             CALL KERNEL_FUNC(CONTA,CONTA,HKERN,DIST)
 
             !DIVIDED BY SPHERE CONTAINING PARTICLES
+            ALLOCATE(DIST8(CONTA))
+            DIST8 = REAL(DIST, KIND=8)
 
             BAS8=0.D0
             BAS88=0.D0
             DO J=1,CONTA
-               BAS8=BAS8+DIST(J)
-               BAS88=BAS88+DIST(J)*MASAP(NEIGH(J))
+               BAS8=BAS8+DIST8(J)
+               BAS88=BAS88+DIST8(J)*REAL(MASAP(NEIGH(J)), KIND=8)
             END DO
 
-            PART_DENS(I) = BAS88 / BAS8 / &
-                           (4.D0/3.D0*PI*REAL(HKERN**3, KIND=8))
+            PART_DENS(I) = BAS88 / ( BAS8 * ( (4.D0/3.D0)*PI*REAL(HKERN**3, KIND=8)) )
+                           
             
             DEALLOCATE(DIST,NEIGH)
+            DEALLOCATE(DIST8)
          ENDDO
          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-         
          !$OMP PARALLEL DO SHARED(KNEIGHBOURS,NX,NY,NZ,MASAP,U2PA,U3PA,U4PA,U2,U3,U4, &
          !$OMP                   TREE,DX,DY,DZ,RADX,RADY,RADZ,PART_DENS) &
-         !$OMP PRIVATE(I,IX,JY,KZ,QUERY,TAR,DIST,NEIGH, & 
+         !$OMP PRIVATE(I,IX,JY,KZ,QUERY,TAR,DIST,DIST8,NEIGH, & 
          !$OMP               HKERN,BAS8,BAS8X,BAS8Y,BAS8Z,CONTA), REDUCTION(MAX:HPART) &
          !$OMP SCHEDULE(DYNAMIC), DEFAULT(NONE)
          DO KZ=1,NZ
@@ -680,7 +686,8 @@ CONTAINS
                      CONTA=KNEIGHBOURS 
                   ELSE 
                      DEALLOCATE(DIST,NEIGH)
-                     QUERY = ball_search(TREE, TAR, DX)
+                     !.true. stands for sorting
+                     QUERY = ball_search(TREE, TAR, DX, .true.)
                      CONTA = SIZE(QUERY%dist)
                      ALLOCATE(DIST(CONTA), NEIGH(CONTA))
                      DIST = QUERY%dist
@@ -703,9 +710,12 @@ CONTAINS
 
                   !VOLUME-weighting
                   DO I=1,CONTA
-                     DIST(I)=DIST(I)*MASAP(NEIGH(I)) / &
-                              PART_DENS(NEIGH(I))
+                     DIST(I)=DIST(I) * (MASAP(NEIGH(I)) / &
+                                        PART_DENS(NEIGH(I)) )
                   END DO
+
+                  ALLOCATE(DIST8(CONTA))
+                  DIST8 = REAL(DIST, KIND=8)
 
                   !averaging
                   BAS8=0.D0
@@ -713,17 +723,17 @@ CONTAINS
                   BAS8Y=0.D0
                   BAS8Z=0.D0
                   DO I=1,CONTA 
-                     BAS8=BAS8+DIST(I)
-                     BAS8X=BAS8X+DIST(I)*U2PA(NEIGH(I))
-                     BAS8Y=BAS8Y+DIST(I)*U3PA(NEIGH(I))
-                     BAS8Z=BAS8Z+DIST(I)*U4PA(NEIGH(I))
+                     BAS8=BAS8+DIST8(I)
+                     BAS8X=BAS8X+DIST8(I)*REAL(U2PA(NEIGH(I)), KIND=8)
+                     BAS8Y=BAS8Y+DIST8(I)*REAL(U3PA(NEIGH(I)), KIND=8)
+                     BAS8Z=BAS8Z+DIST8(I)*REAL(U4PA(NEIGH(I)), KIND=8)
                   END DO
-
                   U2(IX,JY,KZ)=BAS8X/BAS8
                   U3(IX,JY,KZ)=BAS8Y/BAS8
                   U4(IX,JY,KZ)=BAS8Z/BAS8
                   
                   DEALLOCATE(DIST,NEIGH)
+                  DEALLOCATE(DIST8)
                ENDDO
             ENDDO
          ENDDO
