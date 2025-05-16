@@ -32,7 +32,8 @@
        REAL*4 :: UNTERCIO
        real*4 :: RODO,T0,RE0,ACHE,ACHE0,OMEGA0,ROCRIT
        REAL*4 :: T,ZETA
-       REAL*4 :: RETE,ROTE,HTE,CONST
+       REAL*4 :: RETE,ROTE,HTE
+       REAL*4 :: MEANDENS, TOTALMASS
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        
        ! GRID
@@ -659,8 +660,7 @@
           RX1=RADX(1)
           RY1=RADY(1)
           RZ1=RADZ(1)
-          !cell mass
-          CONST=DXX*DYY*DZZ*ROTE*RETE**3 
+
           !cell volume
           VCELL=(LADO0/NXX)**3
           
@@ -1082,6 +1082,13 @@
           IF(FLAG_DENS .EQ. 1) U1CO(1:NXX,1:NYY,1:NZZ) = U1DMCO
           IF(FLAG_DENS .EQ. 2) U1CO(1:NXX,1:NYY,1:NZZ) = U1GCO
 
+         !* Until here, density is in rho_background units -> to units of mean density
+          IF(FLAG_DATA .NE. 2) THEN
+            U1CO = U1CO*ROTE
+            MEANDENS = SUM(U1CO(1:NXX,1:NYY,1:NZZ)) / REAL(NXX*NYY*NZZ)
+            U1CO = U1CO / MEANDENS 
+          ENDIF
+ 
          !* Which divergence components to consider
           ALLOCATE(DIVERCO(LOW1:LOW2,LOW1:LOW2,LOW1:LOW2))
           IF (FLAG_DIV .EQ. 2) DIVERCO(1:NXX,1:NYY,1:NZZ) = DIVERGCO
@@ -1380,7 +1387,7 @@
                         !VOIDS
                         NCELLV(IND)=NCELLV(IND)+1
                         UMEAN(IND)=UMEAN(IND)+U1CO(IX,JY,KZ)
-                        MTOT(IND)=MTOT(IND)+U1CO(IX,JY,KZ)*CONST
+                        MTOT(IND)=MTOT(IND)+U1CO(IX,JY,KZ)*MEANDENS
                         !TOTAL
                         VOLT_CLEAN=VOLT_CLEAN+DBLE(DXX*DYY*DZZ)
                      ENDIF
