@@ -15,5 +15,5 @@ export coredumpsize=1m
 
 ulimit -s unlimited
 
-./voids.x ##> voids.out &
-## gdb voids.x
+./avism.x ##> avism.out &
+## gdb avism.x

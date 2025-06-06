@@ -1,4 +1,13 @@
 
+! ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+MODULE VOIDFINDING
+   IMPLICIT NONE
+   PUBLIC
+
+! ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+CONTAINS 
 
 !********************************************************************************
 SUBROUTINE MARK_ALL(LOW1,LOW2) !valid for all hierarchies
@@ -725,6 +734,7 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
      REAL*4, DIMENSION(NVOID):: VOLNEW
      INTEGER, DIMENSION(NVOID):: UVOID
 !k-d tree
+     REAL :: LPERIODIC(3)
      type(KDTreeNode), pointer :: TREE
      type(KDTreeResult) :: QUERY
      INTEGER :: CONTA
@@ -760,7 +770,13 @@ SUBROUTINE MERGE_VOID(NVOID,INDICE,LOW1,LOW2,DXX,DYY,DZZ,VOLNEW,UVOID,GXC,GYC,GZ
      TREEPOINTS(:,1)=GXC(:)
      TREEPOINTS(:,2)=GYC(:)
      TREEPOINTS(:,3)=GZC(:)
-     TREE => build_kdtree(TREEPOINTS)
+
+#if periodic == 1
+      LPERIODIC = [LADO0PLUS, LADO0PLUS, LADO0PLUS]
+      TREE => build_kdtree(TREEPOINTS,LPERIODIC)
+#else
+      TREE => build_kdtree(TREEPOINTS)
+#endif 
 
      UVOID(:)=-1 !if 0, void has been merged or is unable to be merged, 
                  !if -1 it needs to be merged
@@ -1936,3 +1952,8 @@ END SUBROUTINE VOID_DECONSTRUCTION
 !***************************************************************************
 
 
+! ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+END MODULE VOIDFINDING
+
+! ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~

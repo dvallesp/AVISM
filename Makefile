@@ -2,6 +2,12 @@
 COMP := $(if $(COMP),$(COMP),1)
 $(info COMP = $(COMP))
 
+PERIODIC := $(if $(PERIODIC),$(PERIODIC),0)
+$(info PERIODIC = $(PERIODIC))
+
+HDF5 := $(if $(HDF5),$(HDF5),0)
+$(info HDF5 = $(HDF5))
+
 #### This is an example for a local machine ####
 ifeq ($(COMP),1)          
  FC=gfortran
@@ -17,7 +23,6 @@ ifeq ($(COMP),2)
  LIBS=
  INC=
 endif
-
 ##########################################################################
 
 # DIRECTORIES
@@ -27,8 +32,13 @@ BINDIR     := bin
 # -J is the directory where the .mod files are stored (BIN)
 FFLAGS  += -J $(BINDIR) 
 
+# Including HDF5 library if needed
+ifeq ($(HDF5),1)
+ INC += -I/usr/include/hdf5/serial/
+ LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5_serial_fortran -lhdf5hl_fortran
+endif
+
 # cosmokdtree precompiled variables
-PERIODIC = 0
 LONGINT = 1
 DOUBLEPRECISION = 0
 DIMEN = 3
@@ -38,10 +48,10 @@ FFLAGS_KDTREE += $(FFLAGS)
 FFLAGS_KDTREE += -Dperiodic=$(PERIODIC) -Dlongint=$(LONGINT) -Ddoubleprecision=$(DOUBLEPRECISION) -Ddimen=$(DIMEN)
  
 # EXECUTABLE
-EXEC=voids.x
+EXEC=avism.x
 
 # OBJECTS
-OBJ=commondata.o kdtree.o particles.o avism.o
+OBJ=commondata.o kdtree.o particles.o voidfinding.o avism.o
 
 # COMPILATION
 $(EXEC): $(addprefix $(BINDIR)/, $(OBJ))
@@ -59,8 +69,12 @@ $(BINDIR)/kdtree.o: $(SRCDIR)/kdtree.f90
 $(BINDIR)/particles.o: $(SRCDIR)/particles.f90
 	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/particles.o $(SRCDIR)/particles.f90
 
+# Rule for voidfinding.o
+$(BINDIR)/voidfinding.o: $(SRCDIR)/voidfinding.f90
+	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/voidfinding.o $(SRCDIR)/voidfinding.f90
+
 # Rule for avism.o 
-$(BINDIR)/avism.o: $(SRCDIR)/avism.f90 $(BINDIR)/commondata.o $(BINDIR)/kdtree.o $(BINDIR)/particles.o
+$(BINDIR)/avism.o: $(SRCDIR)/avism.f90 $(BINDIR)/commondata.o $(BINDIR)/kdtree.o $(BINDIR)/particles.o $(BINDIR)/voidfinding.o
 	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/avism.o $(SRCDIR)/avism.f90
 
 # CLEAN
@@ -77,3 +91,5 @@ info:
 	@echo "***********************************************************"
 	@echo "*** FLAGS for compiling ***"
 	@echo "- COMP (optional, default: 1): 1 is a normal run, 2 is for debugging"
+	@echo "- PERIODIC (optional, default: 0): set to 1 if you want periodic boundary conditions"
+	@echo "- HDF5 (optional, default: 0): set to 1 if you want to use HDF5 for reading data (e.g. AREPO)"

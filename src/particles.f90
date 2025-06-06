@@ -579,13 +579,78 @@ CONTAINS
          ENDDO
          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   !************************************************************************
+!************************************************************************
    END SUBROUTINE VVEL_INTERP_SPH
-   !************************************************************************
+!************************************************************************
+
+
+!********************************************************************************
+   SUBROUTINE PPART_DENS(NPARTT,TREE,MASAP,PART_DENS)
+! Obtains the density at the position of each particle using Nearest Neighbours
+!********************************************************************************
+         USE COSMOKDTREE 
+         USE COMMONDATA, ONLY: KNEIGHBOURS,PARTIRED, RXPA,RYPA,RZPA,PI
+
+         IMPLICIT NONE
+         !input variables
+         INTEGER(KIND=8) :: NPARTT, CONTA, I, J
+         REAL*4 MASAP(PARTIRED)
+         !LOCAL
+         REAL*8 BAS8
+
+         !h smoothing length for each particle
+         REAL*4 HKERN
+         REAL*4,ALLOCATABLE::DIST(:)
+         INTEGER(KIND=8),ALLOCATABLE::NEIGH(:)
+
+         !query
+         type(KDTreeNode), pointer, intent(in) :: TREE
+         type(KDTreeResult) :: QUERY
+         
+         REAL*4 :: TAR(3)
+
+         !output
+         REAL PART_DENS(NPARTT)
+
+
+         !$OMP PARALLEL DO SHARED(KNEIGHBOURS,MASAP,TREE,RXPA,RYPA,RZPA,PI) &
+         !$OMP PRIVATE(I,J,QUERY,TAR,DIST,NEIGH, & 
+         !$OMP         BAS8,HKERN,CONTA), REDUCTION(+:PART_DENS) &
+         !$OMP SCHEDULE(DYNAMIC), DEFAULT(NONE)
+         DO I=1,NPARTT
+            TAR(1) = RXPA(I)
+            TAR(2) = RYPA(I)
+            TAR(3) = RZPA(I)
+
+            !Search cell's kneighbours
+            ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
+            QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
+            NEIGH = QUERY%idx
+            DIST = QUERY%dist
+
+            ! Kernel support: distance to the furthest neighbour
+            HKERN = DIST(KNEIGHBOURS)
+            CONTA = KNEIGHBOURS
+
+            BAS8=0.D0
+            DO J=1,CONTA
+               BAS8=BAS8+MASAP(NEIGH(J))
+            END DO
+            PART_DENS(I) = BAS8 / ((4.D0/3.D0)*PI*HKERN**3)
+
+            DEALLOCATE(DIST,NEIGH)
+         ENDDO
+         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!************************************************************************
+   END SUBROUTINE PPART_DENS
+!************************************************************************
+
 
 !********************************************************************************
    SUBROUTINE VVEL_INTERP_SPH_VW(NX,NY,NZ,NPARTT,TREE, &
-                        HPART,MASAP,U2PA,U3PA,U4PA,U2,U3,U4)
+                        HPART,PART_DENS,MASAP,U2PA,U3PA,U4PA,U2,U3,U4)
 !
 ! SAME AS VVEL_INTERP_SPH BUT USING VOLUME WEIGHTING instead of MASS
 !********************************************************************************
@@ -608,8 +673,6 @@ CONTAINS
          REAL*4,ALLOCATABLE::DIST(:)
          REAL*8,ALLOCATABLE::DIST8(:)
          INTEGER(KIND=8),ALLOCATABLE::NEIGH(:)
-         !particle density
-         REAL*8 PART_DENS(NPARTT)
          
          !query
          type(KDTreeNode), pointer, intent(in) :: TREE
@@ -618,50 +681,10 @@ CONTAINS
          REAL*4 :: TAR(3)
          !SPH related
          REAL*4 :: HPART(NPARTT)
+         REAL*4 :: PART_DENS(NPARTT)
          
          !output
          REAL*4 U2(NX,NY,NZ), U3(NX,NY,NZ), U4(NX,NY,NZ)
-
-         !$OMP PARALLEL DO SHARED(KNEIGHBOURS,MASAP,TREE,RXPA,RYPA,RZPA,PI) &
-         !$OMP PRIVATE(I,J,QUERY,TAR,DIST,DIST8,NEIGH, & 
-         !$OMP                HKERN,BAS8,BAS88,CONTA), REDUCTION(+:PART_DENS) &
-         !$OMP SCHEDULE(DYNAMIC), DEFAULT(NONE)
-         DO I=1,NPARTT
-            TAR(1) = RXPA(I)
-            TAR(2) = RYPA(I)
-            TAR(3) = RZPA(I)
-
-            !Search cell's kneighbours
-            ALLOCATE(DIST(KNEIGHBOURS), NEIGH(KNEIGHBOURS))
-            QUERY = knn_search(TREE, TAR, KNEIGHBOURS)
-            NEIGH = QUERY%idx
-            DIST = QUERY%dist
-            CONTA = KNEIGHBOURS
-
-            !cell's smoothing length
-            HKERN=DIST(CONTA)
-
-            !KERNEL FUNCTION
-            CALL KERNEL_FUNC(CONTA,CONTA,HKERN,DIST)
-
-            !DIVIDED BY SPHERE CONTAINING PARTICLES
-            ALLOCATE(DIST8(CONTA))
-            DIST8 = REAL(DIST, KIND=8)
-
-            BAS8=0.D0
-            BAS88=0.D0
-            DO J=1,CONTA
-               BAS8=BAS8+DIST8(J)
-               BAS88=BAS88+DIST8(J)*REAL(MASAP(NEIGH(J)), KIND=8)
-            END DO
-
-            PART_DENS(I) = BAS88 / ( BAS8 * ( (4.D0/3.D0)*PI*REAL(HKERN**3, KIND=8)) )
-                           
-            
-            DEALLOCATE(DIST,NEIGH)
-            DEALLOCATE(DIST8)
-         ENDDO
-         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
          !$OMP PARALLEL DO SHARED(KNEIGHBOURS,NX,NY,NZ,MASAP,U2PA,U3PA,U4PA,U2,U3,U4, &
          !$OMP                   TREE,DX,DY,DZ,RADX,RADY,RADZ,PART_DENS) &
@@ -724,9 +747,9 @@ CONTAINS
                   BAS8Z=0.D0
                   DO I=1,CONTA 
                      BAS8=BAS8+DIST8(I)
-                     BAS8X=BAS8X+DIST8(I)*REAL(U2PA(NEIGH(I)), KIND=8)
-                     BAS8Y=BAS8Y+DIST8(I)*REAL(U3PA(NEIGH(I)), KIND=8)
-                     BAS8Z=BAS8Z+DIST8(I)*REAL(U4PA(NEIGH(I)), KIND=8)
+                     BAS8X=BAS8X+DIST8(I)*U2PA(NEIGH(I))
+                     BAS8Y=BAS8Y+DIST8(I)*U3PA(NEIGH(I))
+                     BAS8Z=BAS8Z+DIST8(I)*U4PA(NEIGH(I))
                   END DO
                   U2(IX,JY,KZ)=BAS8X/BAS8
                   U3(IX,JY,KZ)=BAS8Y/BAS8
@@ -739,9 +762,9 @@ CONTAINS
          ENDDO
          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   !************************************************************************
+!************************************************************************
    END SUBROUTINE VVEL_INTERP_SPH_VW
-   !************************************************************************
+!************************************************************************
 
 
 !************************************************************************

@@ -5,15 +5,15 @@
 files: first, last, every ---------------------------------------------------->
 1,1,1
 cells for the coarser grid --------------------------------------------------->
-128,128,128
+256,256,256
 min and max levels of the hierarchies to be used by voidfind   --------------->
 0,0
 Hubble constant (h), omega matter -------------------------------------------->
 0.678,0.31
 comoving box size ------------------------------------------------------------>
-147.5
+302.63
 periodic boundary conditions -> 0: no, 1: yes -------------------------------->
-0
+1
 *******************************************************************************
 *       Void finder input parameters                                      
 *******************************************************************************
@@ -34,10 +34,12 @@ min void radius to look for subvoids (in Mpc) -------------------------------->
 *******************************************************************************
 *       Type of data to process                                   
 *******************************************************************************
-type of data -> 0: MASCLET, 1: Bin. File Part, 2: Bin. File Grid,  ----------->
+type of data -> 0:MASCLET, 1:BinPart, 2:BinGrid, 3:AREPO(snap) --------------->
 1
 IF MASCLET or Grid data: NX, NY, NZ (INPUT grid size) ------------------------>
 128,128,128
+IF AREPO data: files per snapshot, PartType (1:gas, 2:dm), DM mass (Msun) ---->
+100, 2, 470000000.0
 *******************************************************************************
 *       Particle data handling parameters                                   
 *******************************************************************************
@@ -62,6 +64,6 @@ whether to write cubes that are merged to form voids -> 0: no, 1: yes --->
 NPALEV, NLEVELS, NAMRX, NAMRY, NAMRZ ----------------------------------------->
 45000,10,64,64,64
 which velocity for divergence -> 0: all, 1: DM, 2: gas ----------------------->
-1
+0
 which density field to use -> 0: all, 1: DM, 2: gas -------------------------->
-1
+0

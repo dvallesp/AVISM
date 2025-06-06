@@ -16,16 +16,19 @@
 !-------------------------------------------------------
 !-------------------------------------------------------
 !-------------------------------------------------------
-!-------------------------------------------------------
+!------------------------------------------------------
        USE COMMONDATA
        USE COSMOKDTREE
        USE PARTICLES
+       USE VOIDFINDING
        
        IMPLICIT NONE
 
        ! ITER 
        INTEGER :: IFI, NITER, NDXYZ0
        INTEGER :: ITER, CONTA
+       INTEGER :: FILES_PER_SNAP, PARTTYPEX
+       REAL*4 :: MASSDM
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        
        ! COSMO
@@ -91,6 +94,7 @@
        !kd-tree and SPH Related
        INTEGER :: FLAG_KD
        REAL, ALLOCATABLE :: HPART(:)
+       REAL, ALLOCATABLE :: PART_DENS(:)
        type(KDTreeNode), pointer :: TREE
        REAL*4, ALLOCATABLE :: TREEPOINTS(:,:)
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -101,20 +105,21 @@
        INTEGER :: NPBC
        REAL :: SIZING
        REAL, ALLOCATABLE :: UBAS(:,:,:)
+       REAL :: LPERIODIC(3)
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 !*********************************************************************
        WRITE(*,*) 
        WRITE(*,*)
-       WRITE(*,*) '           __      __  _____    _____   __  __ ' 
-       WRITE(*,*) '     /\    \ \    / / |_   _|  / ____| |  \/  |' 
-       WRITE(*,*) '    /  \    \ \  / /    | |   | (___   | \  / |' 
-       WRITE(*,*) '   / /\ \    \ \/ /     | |    \___ \  | |\/| |' 
-       WRITE(*,*) '  / ____ \    \  /     _| |_   ____) | | |  | |' 
-       WRITE(*,*) ' /_/    \_\    \/     |_____| |_____/  |_|  |_|' 
-       WRITE(*,*) '                                               ' 
-       WRITE(*,*) '                                               ' 
+       WRITE(*,*) '           __      __  _____    _____   __  __    ' 
+       WRITE(*,*) '     /\    \ \    / / |_   _|  / ____| |  \/  |   ' 
+       WRITE(*,*) '    /  \    \ \  / /    | |   | (___   | \  / |   ' 
+       WRITE(*,*) '   / /\ \    \ \/ /     | |    \___ \  | |\/| |   ' 
+       WRITE(*,*) '  / ____ \    \  /     _| |_   ____) | | |  | |   ' 
+       WRITE(*,*) ' /_/    \_\    \/     |_____| |_____/  |_|  |_|   ' 
+       WRITE(*,*) '                                                  ' 
+       WRITE(*,*) '                                                  ' 
        WRITE(*,*) 
        WRITE(*,*)
        CALL SLEEP(2)
@@ -186,6 +191,8 @@
        READ(1,*) FLAG_DATA
        READ(1,*) 
        READ(1,*) NHYX,NHYY,NHYZ
+       READ(1,*) 
+       READ(1,*) FILES_PER_SNAP,PARTTYPEX,MASSDM
        READ(1,*) !****************************************************
        READ(1,*) !*       Particle data handling parameters            *
        READ(1,*) !****************************************************
@@ -219,6 +226,23 @@
 
 !****************************************************
 
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       ! Check periodic boundary conditions consistency with k-d tree
+#if periodic == 1
+         IF (FLAG_PERIOD .EQ. 0) THEN
+            WRITE(*,*) 'WARNING: PBCs not considered in AVISM, but k-d tree has them activated!'
+            WRITE(*,*) '         Compile with periodic=0!'
+            STOP
+         ENDIF
+#else
+         IF (FLAG_PERIOD .NE. 0) THEN
+            WRITE(*,*) 'WARNING: PBCs considered in AVISM, but k-d tree has them deactivated!'
+            WRITE(*,*) '         Compile with periodic=1!'
+            STOP
+         ENDIF
+#endif
+
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        ! Allocate void finding variables
@@ -239,16 +263,16 @@
        IF (FLAG_READ .LT.0 .OR. FLAG_READ .GT. 1) STOP 'FLAG_READ must be 0 or 1'
        IF (FLAG_READ .EQ. 1) NL2 = LEVMAX
        IF (FLAG_READ .EQ. 0) NL2 = NLEVELS
-       !$!$ FLAG_DATA 0,1,2
-       IF (FLAG_DATA .LT.0 .OR. FLAG_DATA .GT. 2) STOP 'FLAG_DATA must be 0,1,2'
+       !$!$ FLAG_DATA 0,1,2,3
+       IF (FLAG_DATA .LT.0 .OR. FLAG_DATA .GT. 3) STOP 'FLAG_DATA must be 0,1,2,3'
        !$!$ KNEIGHBOURS must be positive
        IF (KNEIGHBOURS .LT.0) STOP 'KNEIGHBOURS must be positive'
        !$!$ FLAG_VEL_AVAILABLE must be 0 or 1
        IF (FLAG_VEL_AVAILABLE .LT.0 .OR. FLAG_VEL_AVAILABLE .GT. 1) THEN
           STOP 'FLAG_VEL_AVAILABLE must be 0 or 1'
        ENDIF
-       !for MASCLET
-       IF (FLAG_DATA .EQ.0 ) THEN
+       !for MASCLET and AREPO
+       IF (FLAG_DATA .EQ.0 .OR. FLAG_DATA.EQ.3) THEN
          !$!$ FLAG_DIV must be 0, 1 or 2 
          IF (FLAG_DIV .LT.0 .OR. FLAG_DIV .GT. 2) STOP 'FLAG_DIV must be 0, 1 or 2'
          !$!$ FLAG_DENS must be 0, 1 or 2 
@@ -275,6 +299,14 @@
           WRITE(*,*) '-------> INPUT PARTICLE/TRACER BINARY FILE <-------'
        ELSE IF (FLAG_DATA .EQ. 2) THEN
           WRITE(*,*) '-------> INPUT GRID BINARY FILE <-------'
+       ELSE IF (FLAG_DATA .EQ. 3) THEN
+          WRITE(*,*) '-------> INPUT SIMULATION: AREPO <-------'
+          IF (PARTTYPEX .EQ. 1) THEN
+             WRITE(*,*) 'Particle type: ** GAS **'
+          ELSE
+             WRITE(*,*) 'Particle type: ** DARK MATTER **'
+             WRITE(*,*) 'Mass of DM particles:', MASSDM
+          ENDIF
        ENDIF
 
        WRITE(*,*)
@@ -408,14 +440,32 @@
             call system_clock(t1,trate,tmax)
             CALL READ_BINARY_PART_1(ITER, ZETA)
             call system_clock(t2,trate,tmax)
+            WRITE(*,*) 'Mass range:', MINVAL(MASAP(1:NPARTT)*UM), MAXVAL(MASAP(1:NPARTT)*UM)
          ELSE
             WRITE(*,*) 'Velocities available: NO'
             call system_clock(t1,trate,tmax)
             CALL READ_BINARY_PART_2(ITER, ZETA)
             call system_clock(t2,trate,tmax)
+            WRITE(*,*) 'Mass range:', MINVAL(MASAP(1:NPARTT))*UM, MAXVAL(MASAP(1:NPARTT)*UM)
          ENDIF
 
-         !CHECK PARTICLES INSIDE THE BOUNDING BOX
+       ELSE IF (FLAG_DATA .EQ. 2) THEN
+         WRITE(*,*) 'Binary grid data...'
+         call system_clock(t1,trate,tmax)
+         CALL READ_BINARY_GRID(ITER, ZETA)
+         call system_clock(t2,trate,tmax)
+
+       ELSE IF (FLAG_DATA .EQ. 3) THEN
+         WRITE(*,*) 'AREPO data...'
+         call system_clock(t1,trate,tmax)
+         CALL READ_AREPO_HDF5(ITER,FILES_PER_SNAP,PARTTYPEX,MASSDM,ACHE)
+         call system_clock(t2,trate,tmax)
+         WRITE(*,*) 'Mass range:', MINVAL(MASAP(1:NPARTT)*UM), MAXVAL(MASAP(1:NPARTT)*UM)
+       END IF
+
+       !CHECK PARTICLES INSIDE BOUNDING BOX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       IF (FLAG_DATA .EQ. 1 .OR. FLAG_DATA .EQ. 3) THEN
+      
          FLAG_STOP = 0
          
          !$OMP PARALLEL SHARED(NPARTT, RXPA, RYPA, RZPA, LADO0), &
@@ -437,16 +487,11 @@
          IF (FLAG_STOP .GE. 1) WRITE(*,*)
          IF (FLAG_STOP .GE. 1) WRITE(*,*) 'STOPPING...'
          IF (FLAG_STOP .GE. 1) WRITE(*,*)
-
          IF (FLAG_STOP .GE. 1) STOP
-         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-       ELSE IF (FLAG_DATA .EQ. 2) THEN
-         WRITE(*,*) 'Binary grid data...'
-         call system_clock(t1,trate,tmax)
-         CALL READ_BINARY_GRID(ITER, ZETA)
-         call system_clock(t2,trate,tmax)
-       END IF
+       ENDIF
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
        WRITE(*,*) '///////////// Time (sec) spent during reading:', float(t2-t1)/1.e3
        WRITE(*,*)
@@ -508,7 +553,7 @@
          ENDIF
          ENDIF
        !PARTICLE DATA ALWAYS REQUIRES SPH SMOOTHING
-       ELSE IF (FLAG_DATA .EQ. 1) THEN
+       ELSE IF (FLAG_DATA .EQ. 1 .OR. FLAG_DATA .EQ. 3) THEN
          FLAG_KD = 1
        ENDIF
 
@@ -516,16 +561,26 @@
          
          WRITE(*,*) 'Building k-d tree'
 
-         ALLOCATE(HPART(NPARTT),TREEPOINTS(NPARTT,3))
+         ALLOCATE(HPART(NPARTT),TREEPOINTS(NPARTT,3), &
+                  PART_DENS(NPARTT))
 
          HPART(:) = 0.
+         PART_DENS(:) = 0.
          TREEPOINTS(:,1) = RXPA(1:NPARTT)
          TREEPOINTS(:,2) = RYPA(1:NPARTT)
          TREEPOINTS(:,3) = RZPA(1:NPARTT)
 
-         call system_clock(t1,trate,tmax)
-         TREE => build_kdtree(TREEPOINTS)
-         call system_clock(t2,trate,tmax)
+#if periodic == 1
+            LPERIODIC = [LADO0, LADO0, LADO0]
+            call system_clock(t1,trate,tmax)
+            TREE => build_kdtree(TREEPOINTS,LPERIODIC)
+            call system_clock(t2,trate,tmax)
+
+#else
+            call system_clock(t1,trate,tmax)
+            TREE => build_kdtree(TREEPOINTS)
+            call system_clock(t2,trate,tmax)
+#endif
 
          WRITE(*,*) '///////////// Time (sec) spent building k-d tree ',float(t2-t1)/1.e3
          WRITE(*,*)
@@ -810,8 +865,11 @@
                                                 RXPA,RYPA,RZPA,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
                IF (FLAG_VEL_INTERP .EQ. 1) THEN
 
+                  CALL PPART_DENS(NPARTT,TREE,MASAP,PART_DENS)
+
                   CALL VVEL_INTERP_SPH_VW(NXX,NYY,NZZ,NPARTT,TREE, &
-                                 HPART,MASAP,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
+                                 HPART,PART_DENS,MASAP,U2PA,U3PA,U4PA, &
+                                 U2DMCO,U3DMCO,U4DMCO)
 
                ENDIF
                call system_clock(t2,trate,tmax)
@@ -882,10 +940,10 @@
 
           !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          ! BINARY PART FILE: hierarchy does not matter
+          ! BINARY PART FILE or AREPO: hierarchy does not matter
           !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-          ELSE IF (FLAG_DATA .EQ. 1) THEN
+          ELSE IF (FLAG_DATA .EQ. 1 .OR. FLAG_DATA .EQ. 3) THEN
 
           !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
           IF(FLAG_VEL_AVAILABLE .EQ. 1) THEN
@@ -911,8 +969,11 @@
                                        RXPA,RYPA,RZPA,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
             IF (FLAG_VEL_INTERP .EQ. 1) THEN
 
+               CALL PPART_DENS(NPARTT,TREE,MASAP,PART_DENS)
+
                CALL VVEL_INTERP_SPH_VW(NXX,NYY,NZZ,NPARTT,TREE, &
-                     HPART,MASAP,U2PA,U3PA,U4PA,U2DMCO,U3DMCO,U4DMCO)
+                              HPART,PART_DENS,MASAP,U2PA,U3PA,U4PA, &
+                              U2DMCO,U3DMCO,U4DMCO)
 
             ENDIF              
             call system_clock(t2,trate,tmax)
@@ -1087,6 +1148,9 @@
             U1CO = U1CO*ROTE
             MEANDENS = SUM(U1CO(1:NXX,1:NYY,1:NZZ)) / REAL(NXX*NYY*NZZ)
             U1CO = U1CO / MEANDENS 
+            MEANDENS = MEANDENS * (UM / UL**3)
+            WRITE(*,*) 'Mean density, background, fraction (Msun/Mpc^3):', MEANDENS, RODO * (UM / UL**3), &
+                        MEANDENS / (RODO * (UM / UL**3))
           ENDIF
  
          !* Which divergence components to consider
@@ -1387,9 +1451,9 @@
                         !VOIDS
                         NCELLV(IND)=NCELLV(IND)+1
                         UMEAN(IND)=UMEAN(IND)+U1CO(IX,JY,KZ)
-                        MTOT(IND)=MTOT(IND)+U1CO(IX,JY,KZ)*MEANDENS
+                        MTOT(IND)=MTOT(IND)+U1CO(IX,JY,KZ)*MEANDENS*DXX*DYY*DZZ*RETE**3 !in Msun
                         !TOTAL
-                        VOLT_CLEAN=VOLT_CLEAN+DBLE(DXX*DYY*DZZ)
+                        VOLT_CLEAN=VOLT_CLEAN+DBLE(DXX*DYY*DZZ) !comoving
                      ENDIF
                   ENDIF
                ENDDO
@@ -1443,8 +1507,8 @@
                                             MAXVAL(((3.*VOLNEW)/(4.*PI))**(1./3.), MASK=(UVOID == -1))
           WRITE(*,*) 'MIN(DELTA), MAX(DELTA):', MINVAL(UMEAN-1., MASK=(UVOID == -1)), &
                                                MAXVAL(UMEAN-1., MASK=(UVOID == -1))
-          WRITE(*,*) 'MIN(MASS), MAX(MASS) [Msun]:', MINVAL(MTOT, MASK=(UVOID == -1))*UM, &
-                                               MAXVAL(MTOT, MASK=(UVOID == -1))*UM
+          WRITE(*,*) 'MIN(MASS), MAX(MASS) [Msun]:', MINVAL(MTOT, MASK=(UVOID == -1)), &
+                                               MAXVAL(MTOT, MASK=(UVOID == -1))
           WRITE(*,*) '----------------------------------------------' 
           WRITE(*,*) '\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\'       
           WRITE(*,*)
@@ -1502,7 +1566,7 @@
           !!!! CATALOGUE file
 
           !^^^^^^^^^^^^^^HEADER^^^^^^^^^^^^^^^^
-          WRITE(10,*) IR, NVOID, NVOIDT, NVOIDP, VOLT_CLEAN/(LADO0**3)
+          WRITE(10,*) IR, NVOID, NVOIDT, NVOIDP, VOLT_CLEAN/(LADO0**3), MEANDENS
 
 
           !Optional: cubes file, written at the same time that catalogue file
@@ -1538,7 +1602,7 @@
 
              WRITE(10,*) IND, XC(IND), YC(IND), ZC(IND), GXC(IND), GYC(IND), GZC(IND), &
                          VOLM, REQ(IND), UMEAN(IND), EPS(IND), &
-                         IP(IND), INDP, REQPP, MTOT(IND)*UM
+                         IP(IND), INDP, REQPP, MTOT(IND)
 
           ENDDO
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1684,6 +1748,7 @@
          DEALLOCATE(TREE)
          DEALLOCATE(TREEPOINTS)
          DEALLOCATE(HPART)
+         DEALLOCATE(PART_DENS)
        ENDIF
       !---------------------------------------
 
@@ -1740,8 +1805,6 @@
         INCLUDE 'reader.f90'
 !       Divergence calculation
         INCLUDE 'divergence.f90'
-!       Void finding
-        INCLUDE 'voidfinding.f90'
 !       Passing from AMR to uniform grid
         INCLUDE 'amr2uniform.f90'
 !       Void shapping
