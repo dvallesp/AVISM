@@ -43,9 +43,10 @@ LONGINT = 1
 DOUBLEPRECISION = 0
 DIMEN = 3
 
-FFLAGS_KDTREE = -cpp
-FFLAGS_KDTREE += $(FFLAGS)
-FFLAGS_KDTREE += -Dperiodic=$(PERIODIC) -Dlongint=$(LONGINT) -Ddoubleprecision=$(DOUBLEPRECISION) -Ddimen=$(DIMEN)
+FLAGS_ALL = -cpp
+FLAGS_ALL += $(FFLAGS)
+FLAGS_ALL += -Dperiodic=$(PERIODIC) -Dlongint=$(LONGINT) -Ddoubleprecision=$(DOUBLEPRECISION) -Ddimen=$(DIMEN)
+FLAGS_ALL += -Duse_hdf5=$(HDF5)
  
 # EXECUTABLE
 EXEC=avism.x
@@ -55,27 +56,28 @@ OBJ=commondata.o kdtree.o particles.o voidfinding.o avism.o
 
 # COMPILATION
 $(EXEC): $(addprefix $(BINDIR)/, $(OBJ))
-	$(FC) $(FFLAGS_KDTREE) $(addprefix $(BINDIR)/, $(OBJ)) -o $(EXEC) $(LIBS)
+	$(FC) $(FLAGS_ALL) $(addprefix $(BINDIR)/, $(OBJ)) -o $(EXEC) $(LIBS)
 
 # Rule for commondata.o
 $(BINDIR)/commondata.o: $(SRCDIR)/commondata.f90
-	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/commondata.o $(SRCDIR)/commondata.f90
+	$(FC) $(FLAGS_ALL) $(INC) -c -o $(BINDIR)/commondata.o $(SRCDIR)/commondata.f90
 
 # Rule for kdtree.o
 $(BINDIR)/kdtree.o: $(SRCDIR)/kdtree.f90
-	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/kdtree.o $(SRCDIR)/kdtree.f90
+	$(FC) $(FLAGS_ALL) $(INC) -c -o $(BINDIR)/kdtree.o $(SRCDIR)/kdtree.f90
 
 # Rule for particles.o
 $(BINDIR)/particles.o: $(SRCDIR)/particles.f90
-	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/particles.o $(SRCDIR)/particles.f90
+	$(FC) $(FLAGS_ALL) $(INC) -c -o $(BINDIR)/particles.o $(SRCDIR)/particles.f90
 
 # Rule for voidfinding.o
 $(BINDIR)/voidfinding.o: $(SRCDIR)/voidfinding.f90
-	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/voidfinding.o $(SRCDIR)/voidfinding.f90
+	$(FC) $(FLAGS_ALL) $(INC) -c -o $(BINDIR)/voidfinding.o $(SRCDIR)/voidfinding.f90
+
 
 # Rule for avism.o 
 $(BINDIR)/avism.o: $(SRCDIR)/avism.f90 $(BINDIR)/commondata.o $(BINDIR)/kdtree.o $(BINDIR)/particles.o $(BINDIR)/voidfinding.o
-	$(FC) $(FFLAGS_KDTREE) $(INC) -c -o $(BINDIR)/avism.o $(SRCDIR)/avism.f90
+	$(FC) $(FLAGS_ALL) $(INC) -c -o $(BINDIR)/avism.o $(SRCDIR)/avism.f90
 
 # CLEAN
 clean:
