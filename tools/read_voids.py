@@ -63,18 +63,21 @@ def read_void_catalogue(it, path='', output_format = 'dictionaries', read_region
             levels = []
             for ilev in range(nlev):
                 this_level = {}
-                lev, ncubes, nvoids, nparents, FF = void_catalogue.readline().split()
+                lev, ncubes, nvoids, nparents, FF, meandens = void_catalogue.readline().split()
                 lev = int(lev)
                 ncubes = int(ncubes)
                 nvoids = int(nvoids)
                 nparents = int(nparents)
                 FF = float(FF)
+                meandens = float(meandens)
+                
                 this_level['level'] = lev
                 this_level['ncubes'] = ncubes
                 this_level['nvoids'] = nvoids
                 this_level['nparents'] = nparents
                 this_level['FF'] = FF
-                
+                this_level['meandens'] = meandens
+             
                 # read region
                 if read_region is not None:
                     # array marking cells in voids
