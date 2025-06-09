@@ -1151,6 +1151,9 @@
             MEANDENS = MEANDENS * (UM / UL**3)
             WRITE(*,*) 'Mean density, background, fraction (Msun/Mpc^3):', MEANDENS, RODO * (UM / UL**3), &
                         MEANDENS / (RODO * (UM / UL**3))
+
+          ELSE !GRID input overdensity: assumed in rho_background units
+            MEANDENS = RODO * (UM / UL**3) !mean density in Msun/Mpc^3
           ENDIF
  
          !* Which divergence components to consider
