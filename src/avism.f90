@@ -455,14 +455,17 @@
          CALL READ_BINARY_GRID(ITER, ZETA)
          call system_clock(t2,trate,tmax)
 
+#if use_hdf5 == 1
        ELSE IF (FLAG_DATA .EQ. 3) THEN
          WRITE(*,*) 'AREPO data...'
          call system_clock(t1,trate,tmax)
          CALL READ_AREPO_HDF5(ITER,FILES_PER_SNAP,PARTTYPEX,MASSDM,ACHE)
          call system_clock(t2,trate,tmax)
          WRITE(*,*) 'Mass range:', MINVAL(MASAP(1:NPARTT)*UM), MAXVAL(MASAP(1:NPARTT)*UM)
-       END IF
+#endif
 
+       END IF
+       
        !CHECK PARTICLES INSIDE BOUNDING BOX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        IF (FLAG_DATA .EQ. 1 .OR. FLAG_DATA .EQ. 3) THEN
       
@@ -1149,11 +1152,11 @@
             MEANDENS = SUM(U1CO(1:NXX,1:NYY,1:NZZ)) / REAL(NXX*NYY*NZZ)
             U1CO = U1CO / MEANDENS 
             MEANDENS = MEANDENS * (UM / UL**3)
-            WRITE(*,*) 'Mean density, background, fraction (Msun/Mpc^3):', MEANDENS, RODO * (UM / UL**3), &
+            WRITE(*,*) 'Mean density, background, fraction (Msun/Mpc^3):', MEANDENS, ROTE * (UM / UL**3), &
                         MEANDENS / (RODO * (UM / UL**3))
 
           ELSE !GRID input overdensity: assumed in rho_background units
-            MEANDENS = RODO * (UM / UL**3) !mean density in Msun/Mpc^3
+            MEANDENS = ROTE * (UM / UL**3) !mean density in Msun/Mpc^3
           ENDIF
  
          !* Which divergence components to consider
@@ -1806,6 +1809,9 @@
         INCLUDE 'grid.f90'
 !       Reading data
         INCLUDE 'reader.f90'
+#if use_hdf5 == 1
+        INCLUDE 'reader_hdf5.f90'
+#endif
 !       Divergence calculation
         INCLUDE 'divergence.f90'
 !       Passing from AMR to uniform grid
