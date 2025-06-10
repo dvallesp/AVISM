@@ -30,7 +30,7 @@ Developed at the Departament d'Astronomia i Astrofísica of Universitat de Valè
 1. All cells satysfing $\delta > \delta_1$ and $\nabla \cdot \mathbf{v} > 0$ are marked as potential void centres.
 2. These cells are expanded, starting from the cell with maximum divergence in descending order, until one of the following criteria is fulfilled:
     * $|\nabla\delta| > |\nabla\delta|_\text{th}$
-    * $\nabla \cdot \mathbf{v} < 0$
+    * $\nabla \cdot \mathbf{v} < \nabla \cdot \mathbf{v}_\text{th}$
     * $\delta > \delta_\text{2}$
 3. After the previous step, the code obtains a set of overlapping cubes covering all regions potentially belonging to a void. The next step consists of merging these cubes in a volume-ordered way, starting with the biggest, such that voids are built all synchronously, starting by the core regions (biggest cubes) until reaching the boundaries (smaller cubes).
 
@@ -77,15 +77,17 @@ We also provide a debugging option:
 make COMP=2
 ```
 
-Both options will create the `voids.x` executable inside the root directory.
+Both options will create the `avism.x` executable inside the root directory.
+
+Furthermore, two more compilation options are available: `HDF5` (defaults to 0) and `PERIODIC` (defaults to 0). The first specifies if the [HDF5](https://www.hdfgroup.org/) library is needed (`HDF5=1` ) to read the input data. The second tells the code to use periodic boundary conditions (`PERIODIC=1`), if needed.
 
 ## Running the code
 
-In order to run the code, the user needs to execute `voids.x` with a suitable memory and parallelisation (OpenMP) configuration. The `run.sh` file exemplifies this, with a proper setup for most **AVISM** application cases. If a large grid is used (say $1024^3$ cells) or a huge number of particles is provided to the code (more than $10^9$), the user may need to modify some parameters like `stacksize` or `memoryuse`.
+In order to run the code, the user needs to execute `avism.x` with a suitable memory and parallelisation (OpenMP) configuration. The `run.sh` file exemplifies this, with a proper setup for most **AVISM** application cases. If a large grid is used (say $1024^3$ cells) or a huge number of particles is provided to the code (more than $10^9$), the user may need to modify some parameters like `stacksize` or `memoryuse`.
 
 ## Input data
 
-As of today, the code allows for three different types of input:
+As of today, the code allows for 4 different types of input:
 
 1. **MASCLET input:** `Option 0`
    
@@ -93,7 +95,7 @@ As of today, the code allows for three different types of input:
 
 2. **Particle input:** `Option 1`
    
-   In order to extend its applicability, we implement the `particle.f90` and `kdtree.f90` modules to process particle data. The code transforms particle fields (masses and velocities) onto a uniform grid representation by leveraging an efficient k-d tree implementation, enabling fast neighbor searches for each cell. Inside the `tools` and `test1` directories the user can find examples for preparing particle data as input for the void finder. The particle input must have the following structure:
+   In order to extend its applicability, we implement the `particle.f90` and `kdtree.f90` modules to process particle data. The code transforms particle fields (masses and velocities) onto a uniform grid representation by leveraging an efficient k-d tree implementation, enabling fast neighbour searches for each cell. Inside the `tools` and `test1` directories the user can find examples for preparing particle data as input for the void finder. The particle input must have the following structure:
 
    * `int64: N, float32: ZETA` 
    * `float32(1:N): X` (Mpc)
@@ -117,8 +119,8 @@ As of today, the code allows for three different types of input:
    When this type of input is selected, the code expects a `bin_file_partXXXXX` binary file. The user must specify an `iteration` or `snapshot` number `XXXXX`, as this allow the code to be run on several iterations without stopping. If this feature is not needed (for example analysing a galaxy survey), one can    simply provide **AVISM** with a bin_file_part00001 file and tell the code to find voids just in iteration `1`. Moreover, `bin_file_partXXXXX` files must be inside the `path_to_AVISM/input_data` directory.
 
    The python script `tools/uchuu2avism.py` serves as an example to properly prepare a particle input from a simulation output (in this case, a halo catalogue from [Mini-Uchuu](https://www.skiesanduniverses.org/Simulations/Uchuu/). Similarly, `tools/galaxy_survey.py` shows how to prepare a galaxy survey input (2MRS [John P. Huchra et al 2012 ApJS 199 26](https://iopscience.iop.org/article/10.1088/0067-0049/199/2/26) in that case).
-  
-4. **Grid input:** `Option 2`
+
+3. **Grid input:** `Option 2`
    
    If an AMR simulation snapshot is previosly processed and transformed into a uniform grid or if, for instance, an external tool such as [CORAS](https://github.com/rlilow/CORAS) is used to reconstruct the velocity and density fields from a galaxy survey on a uniform grid, the user may need to apply **AVISM** directly on this data structure. In this case, the grid input must provide the following information:
    
@@ -134,6 +136,9 @@ As of today, the code allows for three different types of input:
 
    The python script `tools/coras2avism.py` serves as an example to properly prepare a grid input from the output of the [CORAS](https://github.com/rlilow/CORAS) code, consisting of a uniform grid with density and velocity fields reconstructed from a galaxy survey.
 
+4. **Arepo input:** `Option 3`
+
+   A reader for [Arepo](https://arepo-code.org/) cosmological simulations (particularly the [IllustrisTNG](https://www.tng-project.org/) suite) is provided. This way, the user can give as input to the void finder all gas or dark matter particles from a snapshot. Care must be taken, however, as the [HDF5](https://www.hdfgroup.org/) library has to be properly installed and linked inside the Makefile. If this input is chosen, input files should be inside `path_to_AVISM/simu_arepo`.
 
 ## Run configuration
 
@@ -171,25 +176,29 @@ density contrast threshold for the edges ------------------------------------->
 10.
 density gradient threshold --------------------------------------------------->
 0.25
+velocity divergence threshold ------------------------------------------------>
+0.
 min void radius (in Mpc) ----------------------------------------------------->
 3.
 min void radius to look for subvoids (in Mpc) -------------------------------->
 3.
 ```
 
-In this block, the physical thresholds for performing the void-finding algorithm are defined. The default values have been rigorously tested, but the user is free to change them. In descending order, and keeping the notation of _Monllor-Berbegal et al. 2025_, we have $\delta_1$, $\delta_2$ and $\nabla \delta_{th}$.
+In this block, the physical thresholds for performing the void-finding algorithm are defined. The default values have been rigorously tested, but the user is free to change them. In descending order, and keeping the notation of _Monllor-Berbegal et al. 2025_, we have $\delta_1$, $\delta_2$, $\nabla \delta_{th}$ and $\nabla \cdot \mathbf{v}_\text{th}$.
 
 ```
 *******************************************************************************
 *       Type of data to process                                   
 *******************************************************************************
-type of data -> 0: MASCLET, 1: Bin. File Part, 2: Bin. File Grid,  ----------->
-1
-IF MASCLET or Grid data: NX, NY, NZ ------------------------------------------>
-128,128,128
+type of data -> 0:MASCLET, 1:BinPart, 2:BinGrid, 3:AREPO(snap) --------------->
+0
+IF MASCLET or Grid data: NX, NY, NZ (INPUT grid size) ------------------------>
+256,256,256
+IF AREPO data: files per snapshot, PartType (1:gas, 2:dm), DM mass (Msun) ---->
+100,2,470000000.0
 ```
 
-Here, the user must specify the input data format and, in the case of using `Option 0` or `2`, the input grid size should be supplied, with the previous $N_x, N_y, N_z$ values in `General parameters block` being ignored.
+Here, the user must specify the input data format and, in the case of using `Option 0` or `2`, the input grid size should be supplied, with the previous $N_x, N_y, N_z$ values in `General parameters block` being ignored. On the other hand, if 'Option 3' is chosen (that is, Arepo data), the user must specify the number of files per snapshot, the particle type used as matter tracer and the dark matter particle mass if 'PartType=2'.
 
 ```
 *******************************************************************************
@@ -222,7 +231,7 @@ Particle data can be handled in different ways, as the code allows for different
 
 * $N_\ell$ /  $\ell_{min}$ /  $\ell_{max}$  /  $N_x^0$ /  $N_Y^0$ /  $N_z^0$  /  $L$
   
-   - $\ell$ / $N_{cubes}$ / $N_{voids}$ / $N_{\ell-1}$ / FF
+   - $\ell$ / $N_{cubes}$ / $N_{voids}$ / $N_{\ell-1}$ / FF / $\langle  \rho \rangle$
      
       - ID / $X$ / $Y$ / $Z$ / $X_G$ / $Y_G$ / $Z_G$ / Vol / $R$ / $\overline{\rho}$ / $\epsilon$ / IP / ID($\ell-1$) / $R(\ell-1)$ / Mass
         
@@ -258,6 +267,7 @@ Below, we provide three tables (one for each type of information given in `voids
 | $N_{voids}$ | Final number of voids after merging and post-processing |
 | $N_{\ell-1}$  | Number of voids in the previous level (parent voids) |
 | FF  | Volume filling fraction of voids at this grid level |
+|\langle  \rho \rangle| Mean density used to define the density contrast
 
 
 
