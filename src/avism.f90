@@ -230,13 +230,13 @@
        ! Check periodic boundary conditions consistency with k-d tree
 #if periodic == 1
          IF (FLAG_PERIOD .EQ. 0) THEN
-            WRITE(*,*) 'WARNING: PBCs not considered in AVISM, but k-d tree has them activated!'
+            WRITE(*,*) 'WARNING: PBCs not considered in voids.dat, but k-d tree has them activated!'
             WRITE(*,*) '         Compile with periodic=0!'
             STOP
          ENDIF
 #else
          IF (FLAG_PERIOD .NE. 0) THEN
-            WRITE(*,*) 'WARNING: PBCs considered in AVISM, but k-d tree has them deactivated!'
+            WRITE(*,*) 'WARNING: PBCs considered in voids.dat, but k-d tree has them deactivated!'
             WRITE(*,*) '         Compile with periodic=1!'
             STOP
          ENDIF
