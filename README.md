@@ -4,7 +4,7 @@
 
 Developed at the Departament d'Astronomia i Astrofísica of Universitat de València by Óscar Monllor-Berbegal in collaboration with David Vallés-Pérez, Susana Planelles and Vicent Quilis. This work has been supported by the European Union NextGenerationEU (PRTR-C17.I1), the Spanish Ministerio de Ciencia e Innovación(ASFAE/2022/001 and PID2022-138855NB-C33), the Generalitat Valenciana (CIPROM/2022/49), and Óscar Monllor-Berbegal acknowledges support from Universitat de València through an Atracció de Talent fellowship.
 
-
+Citation: Monllor-Berbegal et al. 2025 accepted for pub. in A&A
 
 ## Index of contents 
 
@@ -118,11 +118,11 @@ As of today, the code allows for 4 different types of input:
 
    When this type of input is selected, the code expects a `bin_file_partXXXXX` binary file. The user must specify an `iteration` or `snapshot` number `XXXXX`, as this allow the code to be run on several iterations without stopping. If this feature is not needed (for example analysing a galaxy survey), one can    simply provide **AVISM** with a bin_file_part00001 file and tell the code to find voids just in iteration `1`. Moreover, `bin_file_partXXXXX` files must be inside the `path_to_AVISM/input_data` directory.
 
-   The python script `tools/uchuu2avism.py` serves as an example to properly prepare a particle input from a simulation output (in this case, a halo catalogue from [Mini-Uchuu](https://www.skiesanduniverses.org/Simulations/Uchuu/). Similarly, `tools/galaxy_survey.py` shows how to prepare a galaxy survey input (2MRS [John P. Huchra et al 2012 ApJS 199 26](https://iopscience.iop.org/article/10.1088/0067-0049/199/2/26) in that case).
+   The python script `tools/uchuu2avism.py` serves as an example to properly prepare a particle input from a simulation output (in this case, a halo catalogue from [Mini-Uchuu](https://www.skiesanduniverses.org/Simulations/Uchuu/). Similarly, `tools/galaxy_survey.py` shows how to prepare a simple galaxy survey input (2MRS [John P. Huchra et al 2012 ApJS 199 26](https://iopscience.iop.org/article/10.1088/0067-0049/199/2/26) in that case), although we strongly recommend preprocessing galaxy surveys with external tools such as [CORAS](https://github.com/rlilow/CORAS), [Neural Networks](https://github.com/rlilow/2MRS-NeuralNet), or utilising constrained simulations of the Local Universe [Manticore-Local](https://arxiv.org/abs/2505.10682) to obtain full reconstructions/descriptions of the density and velocity fields (non-linear in the last two examples), thus allowing to fully leverage the void finder capabilities. 
 
 3. **Grid input:** `Option 2`
    
-   If an AMR simulation snapshot is previosly processed and transformed into a uniform grid or if, for instance, an external tool such as [CORAS](https://github.com/rlilow/CORAS) is used to reconstruct the velocity and density fields from a galaxy survey on a uniform grid, the user may need to apply **AVISM** directly on this data structure. In this case, the grid input must provide the following information:
+   If an AMR simulation snapshot is previosly processed and transformed into a uniform grid or if, for instance, the reconstruction of the density and velocity fields from a galaxy survey has been carried out by an external tool on a uniform grid, the user may need to apply **AVISM** directly on this data structure. In this case, the grid input must provide the following information:
    
    * `float32: ZETA` 
    * `float32(1:NX,1:NY,1:NZ): DELTA`
@@ -134,7 +134,7 @@ As of today, the code allows for 4 different types of input:
 
    When this type of input is selected, the code expects a `bin_file_gridXXXXX` binary file inside the `path_to_AVISM/input_data` directory. In analogy to the particle input, the user must specify an `iteration` or `snapshot` number `XXXXX` but, if this feature is not needed, one can simply provide **AVISM** with a bin_file_grid00001 and tell the code to find voids just in iteration `1`.
 
-   The python script `tools/coras2avism.py` serves as an example to properly prepare a grid input from the output of the [CORAS](https://github.com/rlilow/CORAS) code, consisting of a uniform grid with density and velocity fields reconstructed from a galaxy survey.
+   The python scripts `tools/linear2M++_2_avism.py` and `tools/manticore2avism.py` serve as examples to properly prepare a grid input from a full reconstruction and constrained simulation, respectively, of the Local Universe consisting of a uniform grid with the density and velocity fields defined.
 
 4. **Arepo input:** `Option 3`
 
@@ -267,7 +267,7 @@ Below, we provide three tables (one for each type of information given in `voids
 | $N_{voids}$ | Final number of voids after merging and post-processing |
 | $N_{\ell-1}$  | Number of voids in the previous level (parent voids) |
 | FF  | Volume filling fraction of voids at this grid level |
-|\langle  \rho \rangle| Mean density used to define the density contrast
+| $\langle  \rho \rangle$ | Mean density used to define the density contrast
 
 
 
