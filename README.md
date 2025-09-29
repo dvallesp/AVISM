@@ -4,7 +4,7 @@
 
 Developed at the Departament d'Astronomia i Astrofísica of Universitat de València by Óscar Monllor-Berbegal in collaboration with David Vallés-Pérez, Susana Planelles and Vicent Quilis. This work has been supported by the European Union NextGenerationEU (PRTR-C17.I1), the Spanish Ministerio de Ciencia e Innovación(ASFAE/2022/001 and PID2022-138855NB-C33), the Generalitat Valenciana (CIPROM/2022/49), and Óscar Monllor-Berbegal acknowledges support from Universitat de València through an Atracció de Talent fellowship.
 
-Citation: Monllor-Berbegal et al. 2025 accepted for pub. in A&A
+Citation: _Monllor-Berbegal et al. 2025 accepted, A&A_. 
 
 ## Index of contents 
 
@@ -34,11 +34,11 @@ Citation: Monllor-Berbegal et al. 2025 accepted for pub. in A&A
     * $\delta > \delta_\text{2}$
 3. After the previous step, the code obtains a set of overlapping cubes covering all regions potentially belonging to a void. The next step consists of merging these cubes in a volume-ordered way, starting with the biggest, such that voids are built all synchronously, starting by the core regions (biggest cubes) until reaching the boundaries (smaller cubes).
 
-This process can be repeated at different levels of resolution using finer grids, leading to a list of voids-in-voids. The void finder characteristics, several applications (mock test, cosmological simulation data and galaxy surveys), and a thorough comparison with other void finders can be found in _Monllor-Berbegal et al. 2025 in prep._, 
+This process can be repeated at different levels of resolution using finer grids, leading to a list of voids-in-voids. The void finder characteristics, several applications (mock test, cosmological simulation data and galaxy surveys), and a thorough comparison with other void finders can be found in _Monllor-Berbegal et al. 2025 accepted, A&A_. 
 
 ## Repository organisation
 
-The source code can be found inside the `src` folder with all `.f90` files. Several `Python` tools are provided inside the `tools` folder. These are examples to handle simulated and galaxy survey data in order to prepare a proper input for the void finder. Inside `test1` one can find the source code used to create the mock voids test described in  _Monllor-Berbegal et al. 2025 in prep._ Finally, the `config` folder contains `voids.dat`, which is the main configuration file provided to the code. We also give an example `Makefile` and `run.sh` in order to properly compile and execute the code.
+The source code can be found inside the `src` folder with all `.f90` files. Several `Python` tools are provided inside the `tools` folder. These are examples to handle simulated and galaxy survey data in order to prepare a proper input for the void finder. Inside `test1` one can find the source code used to create the mock voids test described in _Monllor-Berbegal et al. 2025 accepted, A&A_. Finally, the `config` folder contains `voids.dat`, which is the main configuration file provided to the code. We also give an example `Makefile` and `run.sh` in order to properly compile and execute the code.
 
 ## Installation
 
@@ -186,7 +186,7 @@ min void radius to look for subvoids (in Mpc) -------------------------------->
 3.
 ```
 
-In this block, the physical thresholds for performing the void-finding algorithm are defined. The default values have been rigorously tested, but the user is free to change them. In descending order, and keeping the notation of _Monllor-Berbegal et al. 2025_, we have $\delta_1$, $\delta_2$, $\nabla \delta_{th}$ and $\nabla \cdot \mathbf{v}_\text{th}$.
+In this block, the physical thresholds for performing the void-finding algorithm are defined. The default values have been rigorously tested, but the user is free to change them. In descending order, and keeping the notation of _Monllor-Berbegal et al. 2025 accepted, A&A_, we have $\delta_1$, $\delta_2$, $\nabla \delta_{th}$ and $\nabla \cdot \mathbf{v}_\text{th}$.
 
 ```
 *******************************************************************************
