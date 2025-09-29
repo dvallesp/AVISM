@@ -134,11 +134,13 @@ As of today, the code allows for 4 different types of input:
 
    When this type of input is selected, the code expects a `bin_file_gridXXXXX` binary file inside the `path_to_AVISM/input_data` directory. In analogy to the particle input, the user must specify an `iteration` or `snapshot` number `XXXXX` but, if this feature is not needed, one can simply provide **AVISM** with a bin_file_grid00001 and tell the code to find voids just in iteration `1`.
 
-   The python scripts `tools/linear2M++_2_avism.py` and `tools/manticore2avism.py` serve as examples to properly prepare a grid input from a full reconstruction and constrained simulation, respectively, of the Local Universe consisting of a uniform grid with the density and velocity fields defined.
+   The python scripts `tools/linear2M++_2_avism.py` and `tools/manticore2avism.py` serve as examples to properly prepare a grid input from a full linear reconstruction ([2M++_linear](https://cosmicflows.iap.fr/)) and a non-linear constrained simulation ([Manticore-Local](https://arxiv.org/abs/2505.10682))), respectively, of the Local Universe consisting of a uniform grid with the density and velocity fields defined.
 
 4. **Arepo input:** `Option 3`
 
    A reader for [Arepo](https://arepo-code.org/) cosmological simulations (particularly the [IllustrisTNG](https://www.tng-project.org/) suite) is provided. This way, the user can give as input to the void finder all gas or dark matter particles from a snapshot. Care must be taken, however, as the [HDF5](https://www.hdfgroup.org/) library has to be properly installed and linked inside the Makefile. If this input is chosen, input files should be inside `path_to_AVISM/simu_arepo`.
+
+   Note that, in order to use all dark matter or gas particles from Arepo's simulation, the internal AVISM reader (`Option 3`) has to be used. The TNG readers inside `tools` are just examples to handle [IllustrisTNG](https://www.tng-project.org/) halo catalogues to prepare a particle (`Option 2`) input.
 
 ## Run configuration
 
