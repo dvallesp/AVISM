@@ -54,6 +54,12 @@ EXEC=avism.x
 # OBJECTS
 OBJ=commondata.o kdtree.o particles.o voidfinding.o avism.o
 
+# make sure that ./bin/ folder exists before any .o goes there
+$(addprefix $(BINDIR)/, $(OBJ)): | $(BINDIR)
+
+$(BINDIR):
+	@mkdir -p $@
+
 # COMPILATION
 $(EXEC): $(addprefix $(BINDIR)/, $(OBJ))
 	$(FC) $(FLAGS_ALL) $(addprefix $(BINDIR)/, $(OBJ)) -o $(EXEC) $(LIBS)
