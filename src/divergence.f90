@@ -21,17 +21,17 @@ DIFFZ = 0.
 DIFFX(2:NX-1,:,:) = (V2(3:NX,:,:) - V2(1:NX-2,:,:))/2.
 !extrapolate to the borders
 DIFFX(1,:,:)  = 2.*(V2(2,:,:)-V2(1,:,:)) - DIFFX(2,:,:)
-DIFFX(NX,:,:) = 2.*(V2(NX,:,:)-V2(NX-1,:,:))/DX - DIFFX(NX-1,:,:)
+DIFFX(NX,:,:) = 2.*(V2(NX,:,:)-V2(NX-1,:,:)) - DIFFX(NX-1,:,:)
 
 DIFFY(:,2:NY-1,:) = (V3(:,3:NY,:) - V3(:,1:NY-2,:))/2.
 !extrapolate to the borders
 DIFFY(:,1,:)  = 2.*(V3(:,2,:)-V3(:,1,:)) - DIFFY(:,1,:)
-DIFFY(:,NY,:) = 2.*(V3(:,NY,:)-V3(:,NY-1,:))/DY - DIFFY(:,NY-1,:)
+DIFFY(:,NY,:) = 2.*(V3(:,NY,:)-V3(:,NY-1,:)) - DIFFY(:,NY-1,:)
 
 DIFFZ(:,:,2:NZ-1) = (V4(:,:,3:NZ) - V4(:,:,1:NZ-2))/2.
 !extrapolate to the borders
 DIFFZ(:,:,1)  = 2.*(V4(:,:,2)-V4(:,:,1)) - DIFFZ(:,:,2)
-DIFFZ(:,:,NZ) = 2.*(V4(:,:,NZ)-V4(:,:,NZ-1))/DZ - DIFFZ(:,:,NZ-1)
+DIFFZ(:,:,NZ) = 2.*(V4(:,:,NZ)-V4(:,:,NZ-1)) - DIFFZ(:,:,NZ-1)
 
 DIVER = DIFFX/DX + DIFFY/DY + DIFFZ/DZ
 
