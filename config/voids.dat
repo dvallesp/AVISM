@@ -34,7 +34,7 @@ min void radius to look for subvoids (in Mpc) -------------------------------->
 *******************************************************************************
 *       Type of data to process                                   
 *******************************************************************************
-type of data -> 0:MASCLET, 1:BinPart, 2:BinGrid, 3:GADGET-like --------------->
+type of data -> 0:MASCLET, 1:BinPart, 2:BinGrid, 3:GADGET-like, 4:ENZO ------->
 1
 IF MASCLET or Grid data: NX, NY, NZ (INPUT coarse grid size) ----------------->
 128,128,128
