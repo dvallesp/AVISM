@@ -117,6 +117,10 @@
        REAL, ALLOCATABLE :: UBAS(:,:,:)
        REAL :: LPERIODIC(3)
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! ENZO reader specification
+       character*200 enzofolderprefix,enzoprefix,enzopostfix
+       common /ENZOPOSTFIX/ enzofolderprefix,enzoprefix,enzopostfix
    
 
 
@@ -208,6 +212,10 @@
        READ(1,*) FLAG_GADGET_READER
        READ(1,*)
        READ(1,*) FLAG_MASK
+       READ(1,*)
+       READ(1,'(A)') enzofolderprefix
+       READ(1,'(A)') enzoprefix
+       READ(1,'(A)') enzopostfix
        READ(1,*) !****************************************************
        READ(1,*) !*       Particle data handling parameters            *
        READ(1,*) !****************************************************
@@ -290,8 +298,8 @@
        IF (FLAG_READ .LT.0 .OR. FLAG_READ .GT. 1) STOP 'FLAG_READ must be 0 or 1'
        IF (FLAG_READ .EQ. 1) NL2 = LEVMAX
        IF (FLAG_READ .EQ. 0) NL2 = NLEVELS
-       !$!$ FLAG_DATA 0,1,2,3
-       IF (FLAG_DATA .LT.0 .OR. FLAG_DATA .GT. 3) STOP 'FLAG_DATA must be 0,1,2,3'
+       !$!$ FLAG_DATA 0,1,2,3,4
+       IF (FLAG_DATA .LT.0 .OR. FLAG_DATA .GT. 4) STOP 'FLAG_DATA must be 0,1,2,3,4'
        !$!$ KNEIGHBOURS must be positive
        IF (KNEIGHBOURS .LT.0) STOP 'KNEIGHBOURS must be positive'
        !$!$ FLAG_VEL_AVAILABLE must be 0 or 1
@@ -343,12 +351,15 @@
              WRITE(*,*) 'Particle type: ** DARK MATTER **'
              WRITE(*,*) 'Mass of DM particles:', MASSDM
           ENDIF
+      ELSE IF (FLAG_DATA .EQ. 4) THEN
+          WRITE(*,*) '-------> INPUT SIMULATION: ENZO <-------'
+          WRITE(*,*) 'Warning: ENZO reader, at the moment, only supports input of the root grid'
        ENDIF
 
        WRITE(*,*)
 
        !$!$ If GRID INPUT, allocate coarse grid
-       IF (FLAG_DATA .EQ. 0 .OR. FLAG_DATA .EQ. 2) THEN
+       IF (FLAG_DATA .EQ. 0 .OR. FLAG_DATA .EQ. 2 .OR. FLAG_DATA .EQ. 4) THEN
          NXX=NHYX
          NYY=NHYY
          NZZ=NHYZ
@@ -375,7 +386,7 @@
        WRITE(*,*)
        WRITE(*,*) '************   INPUT  *********************' 
        WRITE(*,*) 'Iterations:         ', FIRST,LAST,EVERY
-       IF (FLAG_DATA .EQ. 0 .OR. FLAG_DATA .EQ. 2) WRITE(*,*) 'Base mesh:  ', NHYX,NHYY,NHYZ,LADO0
+       IF (FLAG_DATA .EQ. 0 .OR. FLAG_DATA .EQ. 2 .OR. FLAG_DATA .EQ. 4) WRITE(*,*) 'Base mesh:  ', NHYX,NHYY,NHYZ,LADO0
        WRITE(*,*) 'Coarser grid        ', NCOX,NCOY,NCOZ
        WRITE(*,*) 'Threshold values    ', DENS_THRE, DENS_THRE2, GRAD_THRE
        WRITE(*,*) 'LEVMIN, LEVMAX, NL2:', LEVMIN, LEVMAX, NL2
@@ -404,11 +415,11 @@
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       !!!!!!!!!!!! CHECK HDF5 - GADGET
+       !!!!!!!!!!!! CHECK HDF5 - GADGET AND ENZO
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       IF (FLAG_DATA .EQ. 3) THEN
+       IF (FLAG_DATA .EQ. 3 .OR. FLAG_DATA .EQ. 4) THEN
 #if use_hdf5 == 0
-         STOP 'HDF5 deactivated at compilation time but FLAG_DATA=3'
+         STOP 'HDF5 deactivated at compilation time but FLAG_DATA=', FLAG_DATA, ' selected! Compile with HDF5 support'
 #endif
        ENDIF
 
@@ -537,6 +548,12 @@
          call system_clock(t2,trate,tmax)
 
          WRITE(*,*) 'Mass range:', MINVAL(MASAP(1:NPARTT)*UM), MAXVAL(MASAP(1:NPARTT)*UM)
+
+       ELSE IF (FLAG_DATA .EQ. 4) THEN
+         WRITE(*,*) 'ENZO data...'
+         call system_clock(t1,trate,tmax)
+         CALL READ_ENZO_HDF5(ITER, ZETA)
+         call system_clock(t2,trate,tmax)
 #endif
 
        END IF
@@ -589,7 +606,7 @@
 
        !WARNINGS FOR SPH KNEIGHBOURS
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       IF (FLAG_DATA .NE. 2) THEN
+       IF (FLAG_DATA .NE. 2 .AND. FLAG_DATA .NE. 4) THEN
 
          WRITE(*,*) 'Mean number of particles per cell (COARSEST GRID):', REAL(NPARTT)/REAL(NCOX**3)
          WRITE(*,*) 'Number of kneighbours for SPH interpolation:', KNEIGHBOURS
@@ -731,7 +748,7 @@
 
           !CREATING GRID FOR THIS LEVEL
           !MASCLET or GRID CASE: levels come from base grid (level ordering matters)
-          IF (FLAG_DATA .EQ. 0 .OR. FLAG_DATA .EQ. 2) THEN
+          IF (FLAG_DATA .EQ. 0 .OR. FLAG_DATA .EQ. 2 .OR. FLAG_DATA .EQ. 4) THEN
            NXX=INT(REAL(NHYX)*(2.**(IR)))
            NYY=INT(REAL(NHYY)*(2.**(IR)))
            NZZ=INT(REAL(NHYZ)*(2.**(IR)))
@@ -1297,7 +1314,7 @@
           IF(FLAG_DENS .EQ. 2) U1CO(1:NXX,1:NYY,1:NZZ) = U1GCO
 
          !* Until here, density is in rho_background units -> to units of mean density
-          IF(FLAG_DATA .NE. 2) THEN
+          IF(FLAG_DATA .NE. 2 .AND. FLAG_DATA .NE. 4) THEN
             U1CO = U1CO*ROTE
             MEANDENS = SUM(U1CO(1:NXX,1:NYY,1:NZZ), &
                               MASK=(SMASK(1:NXX,1:NYY,1:NZZ) == 1)) / &

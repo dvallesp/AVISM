@@ -44,6 +44,10 @@ GADGET-like reader: 0:IllustrisTNG, 1:FLAMINGO-DMO --------------------------->
 1
 IF SURVEY: input mask (0:yes, 1:no) ------------------------------------------>
 1
+IF ENZO: 3 lines with (1) folder prefix, (2) file prefix, (3) file postfix --->
+RD
+RedshiftOutput
+.cpu0000
 *******************************************************************************
 *       Particle data handling parameters                                   
 *******************************************************************************
